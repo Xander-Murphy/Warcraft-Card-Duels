@@ -87,21 +87,21 @@ Requirements: 13
 # Schedule & Milestones
 
 ## Sprint 1
-Week 3: Setup
-Week 4: Game States
-Week 5: Characters
-Week 6: Turns & Actions
-Week 7: Win Conditions & Testing
+Week 4: Setup
+Week 5: Game States
+Week 6: Characters
+Week 7: Turns & Actions
+Week 8: Win Conditions & Testing
 
 ---
 # Schedule & Milestones
 
 ## Sprint 2
-Week 6: New Heroes
-Week 7: Team Selection
-Week 8: Abilities
-Week 9: Enemy Types & Encounters
-Week 10: Finishing Touches & Testing
+Week 10: New Heroes
+Week 11: Team Selection
+Week 12: Abilities
+Week 13 Enemy Types & Encounters
+Week 14: Finishing Touches & Testing
 
 ---
 # Project Documentation
