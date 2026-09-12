@@ -11,12 +11,10 @@ Xander Murphy
 ---
 # Project Description
 
-- 
+- Problem: Players want an engaging turn-based RPG experience with varied heroes, abilities, enemies, and challenging boss fights.
+- Goal: Create a turn-based RPG game with a variety of heroes with unique abilities and enemies to face.
+- Proposed Solution: Build a Python game where players create a team of 3 heroes and fight randomly generated groups of enemies before facing powerful bosses.
 
----
-# Problem Domain
-
-- 
 
 ---
 # Core Features Overview
@@ -45,7 +43,7 @@ Turn-based combat between a player's team and enemies
 
 ## Requirements
 - Determine turn order for each hero or enemy
-- Allow each hero and enemy to use an ability
+- Allow each hero and enemy to use abilities
 - Abilities have unique effects or damage
 - Track health and other combat stats
 - Detect victory or defeat conditions
@@ -58,7 +56,7 @@ Fight waves of enemies before a boss encounter
 
 ## Requirements
 - Each wave of enemies has 1-3 random mobs
-- Enemies have different types
+- Enemies have different types and behaviors
 - Scaling difficulty as game progresses
 - Provide clear victory conditions
 
@@ -71,29 +69,39 @@ Requirements: 13
 ---
 # Architecture 
 
-- 
+- Modular, object-oriented architecture
+- Separate systems for heroes, combat, encounters, and UI
+- Designed to make adding new heroes, abilities, and enemies easier
 
 ---
 # Design
 
-- 
-
----
-# Team Rules
-
-1. Communicate effectively and consistantly.
-2. All weekly updates must be finished by Saturday of the current week.
-3. Communication will be handled over discord weekly for quick messages and questions.
+- Encapsulation — Classes manage their own data and behavior.
+- Separation of Concerns — Each system has a specific responsibility.
+- Inheritance — Shared character functionality can be reused.
+- Composition — Heroes can contain their abilities.
+- State Pattern — Used to manage different game states.
+- Strategy Pattern — Can be used for different enemy behaviors.
 
 ---
 # Schedule & Milestones
 
 ## Sprint 1
+Week 3: Setup
+Week 4: Game States
+Week 5: Characters
+Week 6: Turns & Actions
+Week 7: Win Conditions & Testing
 
 ---
 # Schedule & Milestones
 
 ## Sprint 2
+Week 6: New Heroes
+Week 7: Team Selection
+Week 8: Abilities
+Week 9: Enemy Types & Encounters
+Week 10: Finishing Touches & Testing
 
 ---
 # Project Documentation

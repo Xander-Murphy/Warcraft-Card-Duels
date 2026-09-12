@@ -1,5 +1,6 @@
 # Warcraft-Card-Duels
 This is my individual project for ASE 420, ASE 330 and serves as a baseline for my Capstone project.
+
 Canvas page link (ASE420): https://nku.instructure.com/courses/91834/pages/individual-project-page-of-xander-murphy
 
 ## Project Description
@@ -78,12 +79,8 @@ The project is divided into two 5-week sprints.
 
 **Sprint 1 Features:**
 
-* Hero/team system
-* Core combat system
-* Character statistics
-* Turn-based combat
-* Basic combat actions
-* Victory and defeat conditions
+- Hero/team system
+- Core combat system
 
 **Sprint 1 Deliverable:** A playable combat environment demonstrating heroes, enemies, turn-based combat, displayed statistics, and victory/defeat conditions.
 
@@ -101,11 +98,7 @@ The project is divided into two 5-week sprints.
 
 **Sprint 2 Features:**
 
-* Expanded hero/team system
-* Unique hero abilities
-* Multiple enemy types
-* Random encounters
-* Encounter progression
-* Boss encounters
+- Completed combat system
+- Encounters and Progression
 
 **Sprint 2 Deliverable:** A complete playable experience where players select a team, use unique abilities, fight varied enemy encounters, progress through the game, and face stronger bosses.
