@@ -87,24 +87,24 @@ Requirements: 13
 # Schedule & Milestones
 
 ## Sprint 1
-Week 4: Setup
-Week 5: Game States
-Week 6: Characters
-Week 7: Turns & Actions
-Week 8: Win Conditions & Testing
+- Week 4: Setup
+- Week 5: Game States
+- Week 6: Characters
+- Week 7: Turns & Actions
+- Week 8: Win Conditions & Testing
 
 ---
 # Schedule & Milestones
 
 ## Sprint 2
-Week 10: New Heroes
-Week 11: Team Selection
-Week 12: Abilities
-Week 13 Enemy Types & Encounters
-Week 14: Finishing Touches & Testing
+- Week 10: New Heroes
+- Week 11: Team Selection
+- Week 12: Abilities
+- Week 13 Enemy Types & Encounters
+- Week 14: Finishing Touches & Testing
 
 ---
 # Project Documentation
 
-- [Project Plan Presentation (PPP)]()
+- [Project Plan Presentation (PPP)](https://github.com/Xander-Murphy/Warcraft-Card-Duels/blob/main/docs/PPP.pdf)
 - [GitHub Repository](https://github.com/Xander-Murphy/Warcraft-Card-Duels)

@@ -9,15 +9,15 @@ html: true
 ---
 # Class 1: Warrior
 
-- Fury:
-- Arms:
+- Fury: Braeks
+- Arms: 
 - Prot:
 
 ---
 # Class 2: Hunter
 
-- Survival:
-- Marksman:
+- Survival: Scatter
+- Marksman: Ecro
 - Beastmaster:
 
 ---
@@ -39,7 +39,7 @@ html: true
 
 - Brewmaster:
 - Mistweaver:
-- Windwalker:
+- Windwalker: Vel
 
 ---
 # Class 6: Demon Hunter
@@ -64,7 +64,7 @@ html: true
 
 ---
 # Class 9: Rogue
-- Subtlety:
+- Subtlety: Genjo
 - Assassination:
 - Outlaw:
 
@@ -85,7 +85,7 @@ html: true
 ---
 # Class 12: Druid
 
-- Guardian:
+- Guardian: Phread
 - Feral:
 - Restoration:
 - Balance:
