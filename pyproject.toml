@@ -1,0 +1,19 @@
+[project]
+name = "warcraft-card-duels"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Xander", email = "xanderjm1116@gmail.com" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    "pygame>=2.6.1",
+]
+
+[project.scripts]
+warcraft-card-duels = "warcraft_card_duels:main"
+
+[build-system]
+requires = ["uv_build>=0.12.9,<0.13.0"]
+build-backend = "uv_build"
