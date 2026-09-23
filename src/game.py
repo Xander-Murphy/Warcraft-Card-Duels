@@ -20,36 +20,36 @@ class Game:
     self.selected_heroes = [] # stores heroes the player selects for their team
     self.hero_selection = 0 # starts the selected hero list at the first entry
 
-  def handle_events(self):
+  def handle_events(self): # This function handles events checks the current game state and uses specific screen functions depending on the current state
     for event in pygame.event.get():
-      if event.type == pygame.QUIT: # if the application is closed the process stops running
+      if event.type == pygame.QUIT: 
         self.running = False
 
-      elif event.type == pygame.KEYDOWN: # checks if a key on the keyboard is pressed
+      elif event.type == pygame.KEYDOWN: 
 
-        if self.state == GameState.MAIN_MENU: #if game state is main menu
-          self.handle_main_menu_input(event)  # process using main menu input function
+        if self.state == GameState.MAIN_MENU: 
+          self.handle_main_menu_input(event)  
 
-        elif self.state == GameState.TEAM_SELECTION: #if game state is team selection
-          self.handle_team_selection_input(event)    # process using team selection function
+        elif self.state == GameState.TEAM_SELECTION: 
+          self.handle_team_selection_input(event)    
 
-  def handle_main_menu_input(self, event):
+  def handle_main_menu_input(self, event): # This function handles keyboard input when the game state is set to MAIN_MENU
     if event.key in (pygame.K_UP, pygame.K_w): # pressing the ↑ or W moves the selection up
       self.menu_selection -= 1
 
     elif event.key in (pygame.K_DOWN, pygame.K_s): # pressing the ↓ or S moves the selection down
       self.menu_selection += 1
 
-    elif event.key == pygame.K_RETURN:          # if the user presses enter on the 
-      if self.menu_selection == 0:              # start game button they will enter 
-        self.state = GameState.TEAM_SELECTION   # team selection.
+    elif event.key == pygame.K_RETURN:          
+      if self.menu_selection == 0:               
+        self.state = GameState.TEAM_SELECTION   
                                                 
-      elif self.menu_selection == 1:            # if user selects quit the game
-        self.running = False                    # stops running and closes
+      elif self.menu_selection == 1:            
+        self.running = False                    
 
     self.menu_selection %= 2 # keeps selection between 0 and 1
 
-  def handle_team_selection_input(self, event):
+  def handle_team_selection_input(self, event): # This function handles keyboard input when the game state is set to TEAM_SELECTION
     if event.key in (pygame.K_UP, pygame.K_w): # pressing the ↑ or W moves the selection up
       self.hero_selection -= 1
 
@@ -88,6 +88,7 @@ class Game:
       self.draw_main_menu()               # will draw the screen based on state
     elif self.state == GameState.TEAM_SELECTION:
       self.draw_team_selection()
+
 
   def draw_main_menu(self):
     self.screen.fill((30, 30, 30))
