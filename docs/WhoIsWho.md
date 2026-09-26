@@ -23,15 +23,15 @@ html: true
 ---
 # Class 3: Priest
 
-- Discipline:
+- Discipline: Sussie
 - Holy:
 - Shadow:
 
 ---
 # Class 4: Mage
 
-- Arcane:
-- Fire:
+- Arcane: Koryne
+- Fire: 
 - Frost:
 
 ---
@@ -71,7 +71,7 @@ html: true
 ---
 # Class 10: Shaman
 
-- Restoration:
+- Restoration: Rshamone
 - Elemental:
 - Enhancement:
 
@@ -87,8 +87,8 @@ html: true
 
 - Guardian: Phread
 - Feral:
-- Restoration:
-- Balance:
+- Restoration: Maxxy
+- Balance: Swoop
 
 ---
 # Class 13: Death Knight
