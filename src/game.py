@@ -21,6 +21,9 @@ class Game:
     self.available_dungeons = ["Ragefire Chasm", "Wailing Caverns", "The Deadmines"]
     self.selected_dungeon = None
 
+    self.current_encounter = 0
+    self.total_encounters = 3
+
     # one screen instance per state; each owns its own UI-only state
     # (cursor position, etc.) and reads/writes the shared data above.
     # ENCOUNTER and COMBAT aren't built yet, so they're left out for now —
