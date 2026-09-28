@@ -35,7 +35,7 @@ class DungeonScreen(Screen):
     screen.blit(encounter_text, encounter_rect)
 
     boss_text = info_font.render(
-      "Boss awaits ad the end of the dungeon", True, GRAY
+      "Boss awaits at the end of the dungeon", True, GRAY
     )
     boss_rect = boss_text.get_rect(center=(500, 400))
     screen.blit(boss_text, boss_rect)

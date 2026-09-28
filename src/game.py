@@ -6,6 +6,7 @@ from screens.main_menu import MainMenuScreen
 from screens.team_selection import TeamSelectionScreen
 from screens.dungeon_selection import DungeonSelectionScreen
 from screens.dungeon import DungeonScreen
+from screens.encounter import EncounterScreen
 
 
 class Game:
@@ -33,6 +34,7 @@ class Game:
       GameState.TEAM_SELECTION: TeamSelectionScreen(),
       GameState.DUNGEON_SELECTION: DungeonSelectionScreen(),
       GameState.DUNGEON: DungeonScreen(),
+      GameState.ENCOUNTER: EncounterScreen()
     }
 
   def handle_events(self):
