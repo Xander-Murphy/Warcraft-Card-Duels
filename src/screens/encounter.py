@@ -29,14 +29,9 @@ class EncounterScreen(Screen):
     dungeon_rect = dungeon_text.get_rect(center=(500, 140))
     screen.blit(dungeon_text, dungeon_rect)
 
-    enemies = [
-      "Ragefire Trog",
-      "Ragefire Elemental"
-    ]
-
-    for index, enemy in enumerate(enemies):
+    for index, enemy in enumerate(game.current_enemies):
       enemy_text = enemy_font.render(
-        enemy, True, WHITE
+        enemy.name, True, WHITE
       )
       enemy_rect = enemy_text.get_rect(
         center=(500, 250 + index * 60)

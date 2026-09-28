@@ -3,11 +3,15 @@ import pygame
 from states import GameState
 from lib.colors import WHITE, GOLD, GRAY
 from .base import Screen
+from encounters import generate_encounter
 
 
 class DungeonScreen(Screen):
   def handle_input(self, event, game):
     if event.key == pygame.K_RETURN:
+      game.current_enemies = generate_encounter(
+        game.selected_dungeon, game.current_encounter + 1
+      )
       game.state = GameState.ENCOUNTER
 
     elif event.key == pygame.K_ESCAPE:

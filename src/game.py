@@ -24,6 +24,7 @@ class Game:
 
     self.current_encounter = 0
     self.total_encounters = 3
+    self.current_enemies = []
 
     # one screen instance per state; each owns its own UI-only state
     # (cursor position, etc.) and reads/writes the shared data above.
