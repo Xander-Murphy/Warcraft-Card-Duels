@@ -7,6 +7,7 @@ from screens.team_selection import TeamSelectionScreen
 from screens.dungeon_selection import DungeonSelectionScreen
 from screens.dungeon import DungeonScreen
 from screens.encounter import EncounterScreen
+from hero_data import *
 
 
 class Game:
@@ -16,7 +17,7 @@ class Game:
     self.state = GameState.MAIN_MENU
 
     # shared game data — not tied to any one screen
-    self.available_heroes = ["Warrior", "Mage", "Priest", "Hunter", "Rogue"]
+    self.available_heroes = [KORYNE, GENJO, SCATTER, BRAEKS]
     self.selected_heroes = []  # heroes the player picks for their team
 
     self.available_dungeons = ["Ragefire Chasm", "Wailing Caverns", "The Deadmines"]
