@@ -19,11 +19,29 @@ class Character:
       self.speed = speed
 
       self.abilities = abilities if abilities else []
+      self.active_effects = []
 
   def is_alive(self):
      return self.health > 0
 
   def take_damage(self, amount):
-      damage = max(0, amount - self.defense)
-      self.health = max(0, self.health - damage)
-      return damage
+    damage = max(0, amount - self.defense)
+    self.health = max(0, self.health - damage)
+    return damage
+
+  def add_effect(self, effect):
+     self.active_effects.append(effect)
+
+  def remove_effect(self, effect):
+     if effect in self.active_effects:
+        self.active_effects.remove(effect)
+
+  def update_effects(self):
+    for effect in self.active_effects:
+      effect.reduce_duration()
+
+      self.active_effects = [
+         effect for effect in self.active_effects
+         if effect.is_active()
+        ]
+
