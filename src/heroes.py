@@ -10,6 +10,7 @@ class Hero(Character):
       attack,
       defense,
       speed,
+      resistances=None,
       abilities=None
   ):
     super().__init__(
@@ -19,6 +20,7 @@ class Hero(Character):
       attack,
       defense,
       speed,
+      resistances,
       abilities
     )
 

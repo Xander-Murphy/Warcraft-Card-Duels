@@ -9,6 +9,7 @@ class Enemy(Character):
       attack, 
       defense, 
       speed,
+      resistances = None,
       abilities = None
     ):
     super().__init__(
@@ -18,5 +19,6 @@ class Enemy(Character):
       attack,
       defense,
       speed,
+      resistances,
       abilities
     )

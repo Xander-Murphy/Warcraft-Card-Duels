@@ -1,10 +1,15 @@
+from lib.types import SpellSchool
+
 class Character:
   def __init__(
       self, 
       name, 
       character_class, 
-      health, attack, 
-      defense, speed, 
+      health, 
+      attack, 
+      defense, 
+      speed, 
+      resistances=None,
       abilities=None
     ):
 
@@ -17,6 +22,17 @@ class Character:
       self.attack = attack
       self.defense = defense
       self.speed = speed
+
+      self.resistances = resistances if resistances else {
+         SpellSchool.PHYSICAL: 0,
+         SpellSchool.ARCANE: 0,
+         SpellSchool.FIRE: 0,
+         SpellSchool.FROST: 0,
+         SpellSchool.HOLY: 0,
+         SpellSchool.NATURE: 0,
+         SpellSchool.SHADOW: 0,
+      }
+
 
       self.abilities = abilities if abilities else []
       self.active_effects = []
