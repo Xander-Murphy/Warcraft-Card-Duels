@@ -1,15 +1,16 @@
 from enemies import Enemy
+from ability_data.enemy_abilities import *
 '''
 This houses all enemy data, comment above says the dungeon they are for
 NAME = Enemy("Name", "Class", Health, Attack, Defense, Speed)
 '''
 ### Ragefire Chasm
  
-RAGEFIRE_TROG = Enemy("Ragefire Trog", "Physical", 40, 8, 0, 4)
-RAGEFIRE_SHAMAN = Enemy("Ragefire Shaman", "Caster", 35, 10, 0, 5)
+RAGEFIRE_TROG = Enemy("Ragefire Trog", "Physical", 40, 8, 0, 4, abilities=[TROG_SMASH])
+RAGEFIRE_SHAMAN = Enemy("Ragefire Shaman", "Caster", 35, 10, 0, 5, abilities=[SHAMAN_LIGHTNING])
  
-EARTHBORER = Enemy("Earthborer", "Physical", 45, 12, 2, 5)
-MOLTEN_ELEMENTAL = Enemy("Molten Elemental", "Physical", 50, 10, 2, 4)
+EARTHBORER = Enemy("Earthborer", "Physical", 45, 12, 2, 5, abilities=[EARTHBORER_STRIKE])
+MOLTEN_ELEMENTAL = Enemy("Molten Elemental", "Physical", 50, 10, 2, 4, abilities=[MOLTEN_BLAST])
  
 SEARING_BLADE_CULTIST = Enemy("Searing Blade Cultist", "Physical", 50, 13, 1, 6)
 SEARING_BLADE_WARLOCK = Enemy("Searing Blade Warlock", "Caster", 44, 16, 0, 7)
