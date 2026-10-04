@@ -54,7 +54,7 @@ class TeamSelectionScreen(Screen):
       else:
         hero_color = WHITE
 
-      hero_text = hero_font.render(f"{index + 1}. {hero.specialization} {hero.hero_class}", True, hero_color)
+      hero_text = hero_font.render(f"{index + 1}. {hero.specialization} {hero.character_class}", True, hero_color)
       hero_rect = hero_text.get_rect(center=(500, 180 + index * 60))
       screen.blit(hero_text, hero_rect)
 
