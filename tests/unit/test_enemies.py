@@ -35,6 +35,22 @@ class TestEnemies(unittest.TestCase):
     self.assertEqual(ability.school, SpellSchool.PHYSICAL)
     self.assertEqual(ability.target_type, TargetType.SINGLE_ENEMY)
 
+  def test_molten_elemental_resistances(self):
+    self.assertEqual(
+      MOLTEN_ELEMENTAL.get_resistance(SpellSchool.FIRE),
+      25
+    )
+
+    self.assertEqual(
+      MOLTEN_ELEMENTAL.get_resistance(SpellSchool.FROST),
+      -10
+    )
+
+    self.assertEqual(
+      MOLTEN_ELEMENTAL.get_resistance(SpellSchool.ARCANE),
+      0
+    )
+
 
 if __name__ == "__main__":
   unittest.main()

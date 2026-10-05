@@ -60,4 +60,7 @@ class Character:
          effect for effect in self.active_effects
          if effect.is_active()
         ]
+  def get_resistance(self, school):
+         return self.resistances.get(school, 0)
 
+   
