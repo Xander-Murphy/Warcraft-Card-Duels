@@ -8,6 +8,7 @@ from screens.dungeon_selection import DungeonSelectionScreen
 from screens.dungeon import DungeonScreen
 from screens.encounter import EncounterScreen
 from hero_data import *
+from screens.combat import CombatScreen
 
 
 class Game:
@@ -36,7 +37,8 @@ class Game:
       GameState.TEAM_SELECTION: TeamSelectionScreen(),
       GameState.DUNGEON_SELECTION: DungeonSelectionScreen(),
       GameState.DUNGEON: DungeonScreen(),
-      GameState.ENCOUNTER: EncounterScreen()
+      GameState.ENCOUNTER: EncounterScreen(),
+      GameState.COMBAT: CombatScreen()
     }
 
   def handle_events(self):
