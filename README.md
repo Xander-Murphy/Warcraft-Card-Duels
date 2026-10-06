@@ -56,7 +56,7 @@ uv add pygame
 Run the game with:
 
 ```bash
-uv run src/game.py
+uv run src/main.py
 ```
 
 > **Note:** The game is currently under development, so the final game entry point may change as the project develops.

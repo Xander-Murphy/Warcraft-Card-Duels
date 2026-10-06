@@ -33,7 +33,7 @@ uv add pygame
 Run the game using:
 
 ```bash
-uv run src/game.py
+uv run src/main.py
 ```
 
 ## How to Play
