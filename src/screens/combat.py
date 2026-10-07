@@ -2,6 +2,9 @@ import pygame
 
 from states import GameState
 from lib.colors import WHITE, GOLD, GREEN, GRAY
+from lib.types import TargetType
+from actions import Action
+from combat_round import CombatRound
 from .base import Screen
 
 class CombatScreen(Screen):
@@ -11,6 +14,8 @@ class CombatScreen(Screen):
     self.target_selection = 0
 
     self.selection_mode = "hero"
+
+    self.combat_round = CombatRound()
 
   def _get_positions(self, count, center_x=500, spacing= 250):
     if count == 0:
@@ -51,8 +56,39 @@ class CombatScreen(Screen):
         case pygame.K_RIGHT | pygame.K_d:
           self.ability_selection += 1
           self.ability_selection %= len(selected_hero.abilities)
+        case pygame.K_SPACE:
+          self.selection_mode = "target"
+          self.target_selection = 0
         case pygame.K_ESCAPE:
           self.selection_mode = "hero"
+
+    elif self.selection_mode == "target":
+      selected_hero = game.selected_heroes[self.hero_selection]
+      selected_ability = selected_hero.abilities[self.ability_selection]
+
+      if selected_ability.target_type == TargetType.SINGLE_ENEMY:
+        match event.key:
+          case pygame.K_LEFT | pygame.K_a:
+            self.target_selection -= 1
+            self.target_selection %= len(game.current_enemies)
+            
+          case pygame.K_RIGHT | pygame.K_d:
+            self.target_selection += 1
+            self.target_selection %= len(game.current_enemies)
+
+          case pygame.K_SPACE:
+            target = game.current_enemies[self.target_selection]
+
+            action = Action(
+              selected_hero,
+              selected_ability,
+              [target]
+            )
+
+            self.combat_round.add_action(action)
+            self.selection_mode = "hero"
+          case pygame.K_ESCAPE:
+            self.selection_mode = "ability"
 
   def draw(self, screen, game):
     title_font = pygame.font.Font(None, 48)
@@ -72,10 +108,18 @@ class CombatScreen(Screen):
     enemy_positions = self._get_positions(len(game.current_enemies))
 
     for index, enemy in enumerate(game.current_enemies):
+      if (
+          self.selection_mode == "target"
+          and index == self.target_selection
+      ):
+          enemy_color = GOLD
+      else:
+          enemy_color = WHITE
+
       enemy_text = character_font.render(
-        enemy.name,
-        True,
-        WHITE
+          enemy.name,
+          True,
+          enemy_color
       )
       enemy_rect = enemy_text.get_rect(
         center=(enemy_positions[index], 180)
@@ -143,6 +187,18 @@ class CombatScreen(Screen):
           center=(500, 570)
         )
         screen.blit(description_text, description_rect)
+
+      if self.selection_mode == "target":
+        target_text = info_font.render(
+          "Select a target",
+          True,
+          GOLD
+        )
+
+        target_rect = target_text.get_rect(
+          center=(500, 600)
+        )
+        screen.blit(target_text, target_rect)
 
       # Instructions
       instruction_text = info_font.render(
