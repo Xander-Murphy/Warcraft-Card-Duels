@@ -4,6 +4,8 @@ from lib.types import SpellSchool
 '''
 This houses all hero data
 NAME = Hero("Name", "Class", "Spec", health, attack, defense, speed)
+
+These are prototypes: never mutate them. Use .clone() to get a copy to play with.
 '''
 
 KORYNE = Hero("Koryne", "Mage", "Arcane", 75, 26, 0, 7, resistances={SpellSchool.ARCANE: 15}, abilities=[ARCANE_BLAST, ARCANE_EXPLOSION, ARCANE_BARRIER])

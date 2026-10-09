@@ -1,4 +1,7 @@
-class Ability:
+from lib.prototype import Prototype
+
+
+class Ability(Prototype):
   def __init__(
       self,
       name,

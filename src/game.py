@@ -20,6 +20,7 @@ class Game:
     # shared game data — not tied to any one screen
     self.available_heroes = [KORYNE, GENJO, SCATTER, BRAEKS]
     self.selected_heroes = []  # heroes the player picks for their team
+    self.party = []  # cloned copies of those heroes used in a dungeon run
 
     self.available_dungeons = ["Ragefire Chasm", "Wailing Caverns", "The Deadmines"]
     self.selected_dungeon = None
@@ -40,6 +41,12 @@ class Game:
       GameState.ENCOUNTER: EncounterScreen(),
       GameState.COMBAT: CombatScreen()
     }
+
+  def start_run(self):
+    """Begin a dungeon run with fresh copies of the selected heroes."""
+    self.party = [hero.clone() for hero in self.selected_heroes]
+    self.current_encounter = 0
+    self.current_enemies = []
 
   def handle_events(self):
     for event in pygame.event.get():

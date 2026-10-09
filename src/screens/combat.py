@@ -46,7 +46,7 @@ class CombatScreen(Screen):
     ]
 
   def handle_input(self, event, game):
-    if not game.selected_heroes:
+    if not game.party:
       return
     # Controls hero selection
     if self.selection_mode == "hero":
@@ -55,16 +55,15 @@ class CombatScreen(Screen):
           self.hero_selection = self._navigate_selection(
             event,
             self.hero_selection,
-            len(game.selected_heroes)
+            len(game.party)
           )
         case pygame.K_SPACE:
             self.selection_mode = "ability"
             self.ability_selection = 0
-          
-    #REWORK ABOVE
+            
     # Controls ability selection for selected heroes
     elif self.selection_mode == "ability":
-      selected_hero = game.selected_heroes[self.hero_selection]
+      selected_hero = game.party[self.hero_selection]
 
       match event.key:
         case pygame.K_LEFT | pygame.K_a | pygame.K_RIGHT | pygame.K_d:
@@ -80,7 +79,7 @@ class CombatScreen(Screen):
           self.selection_mode = "hero"
 
     elif self.selection_mode == "target":
-      selected_hero = game.selected_heroes[self.hero_selection]
+      selected_hero = game.party[self.hero_selection]
       selected_ability = selected_hero.abilities[self.ability_selection]
 
       if selected_ability.target_type == TargetType.SINGLE_ENEMY:
@@ -142,7 +141,7 @@ class CombatScreen(Screen):
       screen.blit(enemy_text, enemy_rect)
 
     # Heroes
-    for index, hero in enumerate(game.selected_heroes):
+    for index, hero in enumerate(game.party):
       if index == self.hero_selection:
         hero_color = GOLD
       else:
@@ -161,8 +160,8 @@ class CombatScreen(Screen):
       screen.blit(hero_text, hero_rect)
 
       # Draw abilities for selected hero
-      if game.selected_heroes:
-        selected_hero = game.selected_heroes[self.hero_selection]
+      if game.party:
+        selected_hero = game.party[self.hero_selection]
 
         ability_positions = self._get_positions(
           len(selected_hero.abilities)
@@ -189,7 +188,7 @@ class CombatScreen(Screen):
 
       # Draw ability description
       if self.selection_mode == "ability":
-        selected_hero = game.selected_heroes[self.hero_selection]
+        selected_hero = game.party[self.hero_selection]
         selected_ability = selected_hero.abilities[self.ability_selection]
 
         description_text = info_font.render(

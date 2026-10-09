@@ -1,6 +1,7 @@
+from lib.prototype import Prototype
 from lib.types import EffectType, SpellSchool, EffectCategory
 
-class StatusEffect:
+class StatusEffect(Prototype):
   def __init__(
       self,
       name,

@@ -4,6 +4,8 @@ from lib.types import SpellSchool
 '''
 This houses all enemy data, comment above says the dungeon they are for
 NAME = Enemy("Name", "Class", Health, Attack, Defense, Speed)
+
+These are prototypes: never mutate them. Use .clone() to get a copy to play with.
 '''
 ### Ragefire Chasm
  

@@ -1,6 +1,7 @@
+from lib.prototype import Prototype
 from lib.types import SpellSchool
 
-class Character:
+class Character(Prototype):
   def __init__(
       self, 
       name, 

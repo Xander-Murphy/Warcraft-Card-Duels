@@ -33,4 +33,5 @@ def generate_encounter(dungeon, encounter_number):
 
   enemy_count = random.randint(2, 3)
 
-  return random.choices(enemies, k=enemy_count)
+  # clone so repeated enemies (and later encounters) never share state
+  return [enemy.clone() for enemy in random.choices(enemies, k=enemy_count)]

@@ -22,6 +22,7 @@ class DungeonSelectionScreen(Screen):
 
       case pygame.K_RETURN:
         if game.selected_dungeon is not None:
+          game.start_run()
           game.state = GameState.DUNGEON
 
       case pygame.K_ESCAPE:
