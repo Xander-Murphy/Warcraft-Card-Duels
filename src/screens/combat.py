@@ -17,6 +17,22 @@ class CombatScreen(Screen):
 
     self.combat_round = CombatRound()
 
+  def _navigate_selection(self, event, selection, item_count):
+    match event.key:
+      case pygame.K_LEFT | pygame.K_a:
+        selection -= 1
+
+      case pygame.K_RIGHT | pygame.K_d:
+        selection += 1
+
+    return selection % item_count
+  
+  def _has_queued_action(self, hero):
+    return any(
+      action.actor is hero
+      for action in self.combat_round.action_queue.actions
+    )
+  
   def _get_positions(self, count, center_x=500, spacing= 250):
     if count == 0:
       return []
@@ -35,27 +51,28 @@ class CombatScreen(Screen):
     # Controls hero selection
     if self.selection_mode == "hero":
       match event.key:
-        case pygame.K_LEFT | pygame.K_a:
-          self.hero_selection -= 1
-          self.hero_selection %= len(game.selected_heroes)
-        case pygame.K_RIGHT | pygame.K_d:
-          self.hero_selection += 1
-          self.hero_selection %= len(game.selected_heroes)
+        case pygame.K_LEFT | pygame.K_a | pygame.K_RIGHT | pygame.K_d:
+          self.hero_selection = self._navigate_selection(
+            event,
+            self.hero_selection,
+            len(game.selected_heroes)
+          )
         case pygame.K_SPACE:
-          self.selection_mode = "ability"
-          self.ability_selection = 0
-
+            self.selection_mode = "ability"
+            self.ability_selection = 0
+          
+    #REWORK ABOVE
     # Controls ability selection for selected heroes
     elif self.selection_mode == "ability":
       selected_hero = game.selected_heroes[self.hero_selection]
 
       match event.key:
-        case pygame.K_LEFT | pygame.K_a:
-          self.ability_selection -= 1
-          self.ability_selection %= len(selected_hero.abilities)
-        case pygame.K_RIGHT | pygame.K_d:
-          self.ability_selection += 1
-          self.ability_selection %= len(selected_hero.abilities)
+        case pygame.K_LEFT | pygame.K_a | pygame.K_RIGHT | pygame.K_d:
+          self.ability_selection = self._navigate_selection(
+            event,
+            self.ability_selection,
+            len(selected_hero.abilities)
+          )
         case pygame.K_SPACE:
           self.selection_mode = "target"
           self.target_selection = 0
@@ -68,14 +85,12 @@ class CombatScreen(Screen):
 
       if selected_ability.target_type == TargetType.SINGLE_ENEMY:
         match event.key:
-          case pygame.K_LEFT | pygame.K_a:
-            self.target_selection -= 1
-            self.target_selection %= len(game.current_enemies)
-            
-          case pygame.K_RIGHT | pygame.K_d:
-            self.target_selection += 1
-            self.target_selection %= len(game.current_enemies)
-
+          case pygame.K_LEFT | pygame.K_a | pygame.K_RIGHT | pygame.K_d:
+            self.target_selection = self._navigate_selection(
+              event,
+              self.target_selection,
+              len(game.current_enemies)
+            )
           case pygame.K_SPACE:
             target = game.current_enemies[self.target_selection]
 
