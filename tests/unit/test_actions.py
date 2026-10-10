@@ -161,5 +161,36 @@ class TestActionExecution(unittest.TestCase):
     self.assertEqual(KORYNE.health, KORYNE.max_health)
 
 
+class TestActionTargets(unittest.TestCase):
+
+  def test_action_with_only_dead_targets_cannot_execute(self):
+    koryne = KORYNE.clone()
+    trog = RAGEFIRE_TROG.clone()
+    trog.take_damage(10_000)
+    action = Action(koryne, koryne.abilities[0], [trog])
+
+    self.assertFalse(action.has_living_target())
+    self.assertFalse(action.can_execute())
+    self.assertEqual(action.execute(), [])
+
+  def test_fizzled_action_does_not_spend_the_cooldown(self):
+    koryne = KORYNE.clone()
+    trog = RAGEFIRE_TROG.clone()
+    trog.take_damage(10_000)
+
+    Action(koryne, koryne.abilities[0], [trog]).execute()
+
+    self.assertTrue(koryne.abilities[0].is_ready())
+
+  def test_action_with_one_living_target_still_executes(self):
+    braeks = BRAEKS.clone()
+    dead, alive = DEFIAS_MINER.clone(), DEFIAS_MINER.clone()
+    dead.take_damage(10_000)
+    action = Action(braeks, braeks.abilities[2], [dead, alive])
+
+    self.assertTrue(action.can_execute())
+    self.assertEqual(len(action.execute()), 1)
+
+
 if __name__ == "__main__":
   unittest.main()

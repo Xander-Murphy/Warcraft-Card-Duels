@@ -13,7 +13,8 @@ POISON = StatusEffect(
   EffectType.DAMAGE_OVER_TIME,
   EffectCategory.POISON,
   10,
-  3
+  3,
+  damage_school=SpellSchool.NATURE
 )
 
 ARMOR_BREAK = StatusEffect(

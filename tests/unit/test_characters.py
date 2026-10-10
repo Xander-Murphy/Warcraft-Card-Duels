@@ -191,5 +191,135 @@ class TestEffectsAndHealing(unittest.TestCase):
     self.assertEqual(character.health, 90)
 
 
+class TestRoundEnd(unittest.TestCase):
+
+  def poison(self, duration=3, magnitude=10):
+    return StatusEffect(
+      "Poison", EffectType.DAMAGE_OVER_TIME, EffectCategory.POISON,
+      magnitude, duration, damage_school=SpellSchool.NATURE
+    )
+
+  def test_lose_health_ignores_defense_and_resistance(self):
+    character = make_character(defense=50, resistances={SpellSchool.FIRE: 90})
+
+    self.assertEqual(character.lose_health(30), 30)
+    self.assertEqual(character.health, 70)
+
+  def test_lose_health_cannot_go_below_zero_or_be_negative(self):
+    character = make_character(health=10)
+
+    character.lose_health(-5)
+    self.assertEqual(character.health, 10)
+
+    character.lose_health(500)
+    self.assertEqual(character.health, 0)
+
+  def test_damage_over_time_effect_reports_its_damage_while_active(self):
+    effect = self.poison(duration=1)
+
+    self.assertEqual(effect.damage_per_round(), 10)
+
+    effect.reduce_duration()
+    self.assertEqual(effect.damage_per_round(), 0)
+
+  def test_non_damage_effects_deal_no_damage_per_round(self):
+    self.assertEqual(make_buff(Stat.ATTACK, 10).damage_per_round(), 0)
+    self.assertEqual(make_debuff(Stat.DEFENSE, 10).damage_per_round(), 0)
+    self.assertEqual(make_immunity([SpellSchool.FIRE]).damage_per_round(), 0)
+
+  def test_end_round_deals_damage_over_time_and_reports_it(self):
+    character = make_character(defense=3)
+    character.add_effect(self.poison())
+
+    results = character.end_round()
+
+    self.assertEqual(character.health, 93)  # 10 nature damage - 3 defense
+    self.assertEqual(len(results), 1)
+    self.assertEqual(results[0].amount, 7)
+    self.assertIs(results[0].target, character)
+
+  def test_damage_over_time_is_reduced_by_resistance_to_its_school(self):
+    character = make_character(resistances={SpellSchool.NATURE: 50})
+    character.add_effect(self.poison())
+
+    character.end_round()
+
+    self.assertEqual(character.health, 95)
+
+  def test_other_school_resistance_does_not_reduce_poison(self):
+    character = make_character(resistances={SpellSchool.FIRE: 50})
+    character.add_effect(self.poison())
+
+    character.end_round()
+
+    self.assertEqual(character.health, 90)
+
+  def test_immunity_to_the_school_blocks_damage_over_time(self):
+    character = make_character()
+    character.add_effect(self.poison())
+    character.add_effect(make_immunity([SpellSchool.NATURE], duration=2))
+
+    results = character.end_round()
+
+    self.assertEqual(character.health, 100)
+    self.assertEqual(results[0].amount, 0)
+    self.assertIn("immune", results[0].description)
+
+  def test_immunity_to_a_different_school_does_not_block_poison(self):
+    character = make_character()
+    character.add_effect(self.poison())
+    character.add_effect(make_immunity([SpellSchool.PHYSICAL], duration=2))
+
+    character.end_round()
+
+    self.assertEqual(character.health, 90)
+
+  def test_damage_over_time_without_a_school_only_faces_defense(self):
+    character = make_character(
+      defense=4, resistances={SpellSchool.NATURE: 50}
+    )
+    character.add_effect(StatusEffect(
+      "Curse", EffectType.DAMAGE_OVER_TIME, EffectCategory.CURSE, 10, 2
+    ))
+
+    character.end_round()
+
+    self.assertEqual(character.health, 94)
+
+  def test_end_round_expires_effects(self):
+    character = make_character()
+    character.add_effect(self.poison(duration=1))
+
+    character.end_round()
+
+    self.assertEqual(character.active_effects, [])
+
+  def test_end_round_ticks_ability_cooldowns(self):
+    from abilities import Ability
+    from lib.types import TargetType
+    ability = Ability("A", "", 1, 3, TargetType.SELF)
+    character = make_character(abilities=[ability])
+    ability.use()
+
+    character.end_round()
+
+    self.assertEqual(ability.current_cooldown, 2)
+
+  def test_end_round_does_not_tick_a_character_killed_by_poison_twice(self):
+    character = make_character(health=5)
+    character.add_effect(self.poison())
+    character.add_effect(StatusEffect(
+      "Bleed", EffectType.DAMAGE_OVER_TIME, EffectCategory.PHYSICAL, 10, 3
+    ))
+
+    results = character.end_round()
+
+    self.assertEqual(character.health, 0)
+    self.assertEqual(len(results), 1)
+
+  def test_end_round_with_nothing_active_reports_nothing(self):
+    self.assertEqual(make_character().end_round(), [])
+
+
 if __name__ == "__main__":
   unittest.main()
