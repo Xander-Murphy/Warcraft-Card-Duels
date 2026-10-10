@@ -48,6 +48,7 @@ class TestCloning(unittest.TestCase):
     for original, copied in zip(BRAEKS.abilities, clone.abilities):
       with self.subTest(ability=original.name):
         self.assertIsNot(original, copied)
+        self.assertIsNot(original.effects, copied.effects)
 
   def test_cloned_characters_have_independent_resistances_and_effects(self):
     clone = KORYNE.clone()

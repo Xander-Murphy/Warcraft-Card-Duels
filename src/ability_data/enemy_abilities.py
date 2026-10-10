@@ -1,4 +1,5 @@
 from abilities import Ability
+from ability_effects import DamageEffect
 from lib.types import SpellSchool, TargetType
 
 TROG_SMASH = Ability(
@@ -7,7 +8,8 @@ TROG_SMASH = Ability(
   20,
   1,
   TargetType.SINGLE_ENEMY,
-  SpellSchool.PHYSICAL
+  SpellSchool.PHYSICAL,
+  effects=[DamageEffect()]
 )
 
 SHAMAN_LIGHTNING = Ability(
@@ -16,7 +18,8 @@ SHAMAN_LIGHTNING = Ability(
   25,
   1,
   TargetType.SINGLE_ENEMY,
-  SpellSchool.NATURE
+  SpellSchool.NATURE,
+  effects=[DamageEffect()]
 )
 
 EARTHBORER_STRIKE = Ability(
@@ -25,7 +28,8 @@ EARTHBORER_STRIKE = Ability(
   25,
   2,
   TargetType.SINGLE_ENEMY,
-  SpellSchool.PHYSICAL
+  SpellSchool.PHYSICAL,
+  effects=[DamageEffect()]
 )
 
 
@@ -35,5 +39,6 @@ MOLTEN_BLAST = Ability(
   30,
   2,
   TargetType.SINGLE_ENEMY,
-  SpellSchool.FIRE
+  SpellSchool.FIRE,
+  effects=[DamageEffect()]
 )

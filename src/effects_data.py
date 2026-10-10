@@ -1,5 +1,12 @@
 from effects import StatusEffect
-from lib.types import EffectType, EffectCategory, SpellSchool
+from lib.types import EffectType, EffectCategory, SpellSchool, Stat
+
+'''
+Status effect prototypes. Like hero/enemy/ability data, these are never applied
+directly: ApplyStatusEffect clones them onto the target.
+
+StatusEffect(name, type, category, magnitude, duration, schools, stat)
+'''
 
 POISON = StatusEffect(
   "Poison",
@@ -14,15 +21,18 @@ ARMOR_BREAK = StatusEffect(
   EffectType.DEBUFF,
   EffectCategory.PHYSICAL,
   5,
-  2
+  2,
+  stat=Stat.DEFENSE
 )
 
 ARCANE_VULNERABILITY = StatusEffect(
-  "Arcane Vulerability",
+  "Arcane Vulnerability",
   EffectType.DEBUFF,
   EffectCategory.MAGICAL,
   25,
-  3
+  3,
+  [SpellSchool.ARCANE],
+  Stat.RESISTANCE
 )
 
 PHYSICAL_IMMUNITY = StatusEffect(
@@ -34,7 +44,7 @@ PHYSICAL_IMMUNITY = StatusEffect(
   [SpellSchool.PHYSICAL]
 )
 
-MAGICALL_IMMUNITY = StatusEffect(
+MAGICAL_IMMUNITY = StatusEffect(
   "Magical Immunity",
   EffectType.IMMUNITY,
   EffectCategory.MAGICAL,
@@ -55,5 +65,26 @@ BERSERKER_RAGE = StatusEffect(
   EffectType.BUFF,
   EffectCategory.PHYSICAL,
   10,
-  3
+  3,
+  stat=Stat.ATTACK
+)
+
+# Durations for the two buffs below are placeholders until balancing (week 14).
+ARCANE_BARRIER = StatusEffect(
+  "Arcane Barrier",
+  EffectType.BUFF,
+  EffectCategory.MAGICAL,
+  15,
+  2,
+  list(SpellSchool),
+  Stat.RESISTANCE
+)
+
+SURVIVAL_INSTINCTS = StatusEffect(
+  "Survival Instincts",
+  EffectType.BUFF,
+  EffectCategory.PHYSICAL,
+  7,
+  2,
+  stat=Stat.DEFENSE
 )

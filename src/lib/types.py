@@ -28,3 +28,9 @@ class EffectCategory(Enum):
   CURSE = "Curse"
   DISEASE = "Disease"
   POISON = "Poison"
+
+class Stat(Enum):
+  ATTACK = "Attack"
+  DEFENSE = "Defense"
+  SPEED = "Speed"
+  RESISTANCE = "Resistance"
