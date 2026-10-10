@@ -371,7 +371,7 @@ class TestDrawing(ScreenTestCase):
 
     self.assertIn("Select a target", self.draw())
 
-  def test_abilities_show_cooldowns_and_the_locked_basic_attack(self):
+  def test_abilities_show_cooldowns_and_an_always_available_basic_attack(self):
     self.game.party[0].abilities[0].use()
     self.press(pygame.K_SPACE)
 
@@ -379,19 +379,18 @@ class TestDrawing(ScreenTestCase):
 
     self.assertIn("Arcane Blast (CD 2)", shown)
     self.assertIn("Arcane Explosion", shown)
-    self.assertIn("Basic Attack (locked)", shown)
+    self.assertIn("Basic Attack", shown)
+    self.assertNotIn("Basic Attack (locked)", shown)
 
   def test_ability_description_explains_why_something_is_unavailable(self):
     self.game.party[0].abilities[0].use()
     self.press(pygame.K_SPACE)
     self.assertIn("On cooldown: 2 more round(s)", self.draw())
 
-    self.press(pygame.K_LEFT)  # wraps to the basic attack
-    self.assertIn(
-      "Only usable when none of this hero's abilities are ready", self.draw()
-    )
+    self.press(pygame.K_LEFT)  # wraps to the basic attack, which is never locked
+    self.assertIn("Deals physical damage to one enemy.", self.draw())
 
-  def test_basic_attack_is_unlocked_when_nothing_else_is_ready(self):
+  def test_basic_attack_is_shown_when_nothing_else_is_ready(self):
     for ability in self.game.party[0].abilities:
       ability.use()
     self.press(pygame.K_SPACE)

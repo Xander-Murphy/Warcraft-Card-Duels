@@ -8,6 +8,7 @@ import combat_controller as controller_module
 from abilities import Ability
 from ability_effects import HealEffect
 from characters import Character
+from actions import Action
 from combat import Combat
 from combat_controller import (
   AbilitySelection,
@@ -105,7 +106,10 @@ class TestStartOfFight(unittest.TestCase):
     sweeper.abilities = [sweep]
     controller, _, _ = make_controller(enemies=[sweeper])
 
-    self.assertEqual(controller.intent_text(sweeper), "Sweep -> 3 targets")
+    sweep_on_everyone = Action(sweeper, sweep, controller.combat.heroes)
+    self.assertEqual(
+      controller.describe_action(sweep_on_everyone), "Sweep -> 3 targets"
+    )
 
   def test_first_hero_is_skipped_if_dead(self):
     heroes = [KORYNE.clone(), GENJO.clone(), BRAEKS.clone()]
@@ -227,16 +231,18 @@ class TestAbilitySelection(unittest.TestCase):
     self.assertIsInstance(controller.state, AbilitySelection)
     self.assertIsNone(controller.combat.action_for(heroes[0]))
 
-  def test_basic_attack_is_locked_while_an_ability_is_ready(self):
+  def test_basic_attack_can_be_chosen_while_abilities_are_ready(self):
     controller, heroes, _ = make_controller()
     choose(controller, 0, BASIC)
 
-    self.assertFalse(controller.is_usable(heroes[0].basic_attack))
+    self.assertTrue(controller.is_usable(heroes[0].basic_attack))
+    controller.confirm()
+    self.assertIsInstance(controller.state, TargetSelection)
     controller.confirm()
 
-    self.assertIsInstance(controller.state, AbilitySelection)
+    self.assertIs(action_of(controller, heroes[0]).ability, heroes[0].basic_attack)
 
-  def test_basic_attack_unlocks_when_every_ability_is_on_cooldown(self):
+  def test_basic_attack_is_still_usable_when_every_ability_is_on_cooldown(self):
     controller, heroes, _ = make_controller()
     for ability in heroes[0].abilities:
       ability.use()

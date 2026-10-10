@@ -38,7 +38,7 @@ class Character(Prototype):
 
 
       self.abilities = abilities if abilities else []
-      # Used when none of the abilities are ready
+      # Available at all times, whatever the abilities' cooldowns
       self.basic_attack = BASIC_ATTACK.clone()
       self.active_effects = []
 
@@ -48,10 +48,11 @@ class Character(Prototype):
   def usable_abilities(self):
     """What this character can use right now.
 
-    The ready abilities, or just the basic attack if none are ready.
+    The abilities that are off cooldown, plus the basic attack, which is
+    available at all times.
     """
     ready = [ability for ability in self.abilities if ability.is_ready()]
-    return ready if ready else [self.basic_attack]
+    return ready + [self.basic_attack]
 
   def can_use(self, ability):
     return any(ability is usable for usable in self.usable_abilities())

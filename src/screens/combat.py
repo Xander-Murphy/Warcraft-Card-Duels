@@ -176,9 +176,6 @@ class CombatScreen(Screen):
     if controller.is_usable(ability):
       return ability.name
 
-    if ability is controller.selected_hero.basic_attack:
-      return f"{ability.name} (locked)"
-
     return f"{ability.name} (CD {ability.current_cooldown})"
 
   def _draw_abilities(self, screen, fonts, controller):
@@ -216,9 +213,6 @@ class CombatScreen(Screen):
 
     if controller.is_usable(ability):
       return ability.description
-
-    if ability is controller.selected_hero.basic_attack:
-      return "Only usable when none of this hero's abilities are ready"
 
     return f"On cooldown: {ability.current_cooldown} more round(s)"
 

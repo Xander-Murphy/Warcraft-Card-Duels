@@ -339,21 +339,27 @@ class TestUsableAbilities(unittest.TestCase):
     self.assertEqual(first.basic_attack.power, 15)
     self.assertIsNot(first.basic_attack, second.basic_attack)
 
-  def test_ready_abilities_are_usable_and_the_basic_attack_is_not(self):
+  def test_the_basic_attack_is_usable_alongside_ready_abilities(self):
     character = self.make(2, 3)
 
-    self.assertEqual(character.usable_abilities(), character.abilities)
-    self.assertFalse(character.can_use(character.basic_attack))
+    self.assertEqual(
+      character.usable_abilities(),
+      character.abilities + [character.basic_attack]
+    )
+    self.assertTrue(character.can_use(character.basic_attack))
 
   def test_abilities_on_cooldown_are_not_usable(self):
     character = self.make(2, 3)
     character.abilities[0].use()
 
-    self.assertEqual(character.usable_abilities(), [character.abilities[1]])
+    self.assertEqual(
+      character.usable_abilities(),
+      [character.abilities[1], character.basic_attack]
+    )
     self.assertFalse(character.can_use(character.abilities[0]))
     self.assertTrue(character.can_use(character.abilities[1]))
 
-  def test_basic_attack_is_the_fallback_when_nothing_is_ready(self):
+  def test_basic_attack_is_the_only_option_when_nothing_else_is_ready(self):
     character = self.make(2, 3)
     for ability in character.abilities:
       ability.use()

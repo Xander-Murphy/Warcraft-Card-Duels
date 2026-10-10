@@ -500,13 +500,14 @@ def cool_down_everything(character):
     ability.use()
 
 
-class TestBasicAttackFallback(unittest.TestCase):
+class TestBasicAttack(unittest.TestCase):
 
-  def test_hero_cannot_use_the_basic_attack_while_an_ability_is_ready(self):
+  def test_hero_can_use_the_basic_attack_while_an_ability_is_ready(self):
     combat, heroes, enemies = standard_fight()
 
-    self.assertFalse(combat.can_queue(heroes[0], heroes[0].basic_attack))
-    self.assertIsNone(
+    self.assertTrue(heroes[0].abilities[0].is_ready())
+    self.assertTrue(combat.can_queue(heroes[0], heroes[0].basic_attack))
+    self.assertIsNotNone(
       combat.queue_action(heroes[0], heroes[0].basic_attack, [enemies[0]])
     )
 
@@ -520,12 +521,32 @@ class TestBasicAttackFallback(unittest.TestCase):
 
     self.assertIsNotNone(action)
 
-  def test_enemy_cannot_be_queued_with_the_basic_attack_while_an_ability_is_ready(self):
+  def test_enemy_can_be_queued_with_the_basic_attack_while_an_ability_is_ready(self):
     combat, heroes, enemies = standard_fight()
     trog = enemies[0]
 
-    self.assertIsNone(
+    self.assertTrue(trog.abilities[0].is_ready())
+    self.assertIsNotNone(
       combat.queue_action(trog, trog.basic_attack, [heroes[0]])
+    )
+
+  def test_basic_attack_never_goes_on_cooldown(self):
+    combat, heroes, enemies = standard_fight()
+    koryne = heroes[0]
+
+    for _ in range(3):
+      self.assertIsNotNone(
+        combat.queue_action(koryne, koryne.basic_attack, [enemies[1]])
+      )
+      combat.resolve_round()
+
+    self.assertTrue(koryne.basic_attack.is_ready())
+
+  def test_other_characters_basic_attacks_cannot_be_borrowed(self):
+    combat, heroes, enemies = standard_fight()
+
+    self.assertIsNone(
+      combat.queue_action(heroes[0], heroes[1].basic_attack, [enemies[0]])
     )
 
   def test_basic_attack_hits_for_15_scaled_by_attack(self):

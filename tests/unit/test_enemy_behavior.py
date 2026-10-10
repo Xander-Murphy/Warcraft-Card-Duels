@@ -80,12 +80,12 @@ class TestBasicAttack(unittest.TestCase):
 
     self.assertEqual(result.amount, 17)  # round(15 * 1.11)
 
-  def test_enemy_uses_its_ready_ability_and_only_falls_back_when_none_is_ready(self):
+  def test_enemy_can_always_use_its_basic_attack_but_only_ready_abilities(self):
     trog, other = RAGEFIRE_TROG.clone(), RAGEFIRE_TROG.clone()
     smash = trog.abilities[0]  # cooldown 1
 
     self.assertTrue(trog.can_use(smash))
-    self.assertFalse(trog.can_use(trog.basic_attack))
+    self.assertTrue(trog.can_use(trog.basic_attack))
 
     smash.use()
 
@@ -123,14 +123,33 @@ class TestRandomBehavior(unittest.TestCase):
     self.assertIs(action.ability, enemy.basic_attack)
     self.assertIs(action.actor, enemy)
 
-  def test_enemy_uses_a_ready_ability_in_preference_to_the_basic_attack(self):
+  def test_the_basic_attack_is_one_more_option_beside_a_ready_ability(self):
     smash = make_ability("Smash")
     enemy = make_enemy(abilities=[smash])
 
-    for seed in range(20):
+    chosen = []
+    for seed in range(60):
       action = self.choose(enemy, rng=seed)
       assert action is not None
-      self.assertIs(action.ability, smash)
+      chosen.append(action.ability)
+
+    self.assertEqual(
+      {id(ability) for ability in chosen},
+      {id(smash), id(enemy.basic_attack)}
+    )
+
+  def test_ability_and_basic_attack_are_roughly_equally_likely(self):
+    smash = make_ability("Smash")
+    enemy = make_enemy(abilities=[smash])
+
+    smashes = sum(
+      1 for seed in range(400)
+      if (action := self.choose(enemy, rng=seed)) is not None
+      and action.ability is smash
+    )
+
+    self.assertGreater(smashes, 150)
+    self.assertLess(smashes, 250)
 
   def test_enemy_uses_basic_attack_when_every_ability_is_on_cooldown(self):
     smash = make_ability("Smash", cooldown=3)
@@ -148,10 +167,10 @@ class TestRandomBehavior(unittest.TestCase):
     enemy = make_enemy(abilities=[cooling, ready])
     cooling.use()
 
-    for seed in range(30):
+    for seed in range(60):
       action = self.choose(enemy, rng=seed)
       assert action is not None
-      self.assertIs(action.ability, ready)
+      self.assertIsNot(action.ability, cooling)
 
   def test_ability_choice_is_random_among_ready_abilities(self):
     first, second = make_ability("First"), make_ability("Second")
@@ -163,7 +182,7 @@ class TestRandomBehavior(unittest.TestCase):
       assert action is not None
       chosen.add(action.ability.name)
 
-    self.assertEqual(chosen, {"First", "Second"})
+    self.assertEqual(chosen, {"First", "Second", "Basic Attack"})
 
   def test_single_target_is_a_random_living_hero(self):
     enemy = make_enemy()
@@ -413,21 +432,27 @@ class TestPlanEnemyActions(unittest.TestCase):
       results[0].amount
     )
 
-  def test_enemy_alternates_special_and_basic_attack_around_its_cooldown(self):
-    # Molten Blast has cooldown 2: blast, basic, blast, basic ...
-    molten = seeded(MOLTEN_ELEMENTAL.clone())
-    hero = Character("Target", "Test", 1000, 0, 0, 5)
-    combat = Combat([hero], [molten])
-    used = []
+  def test_a_special_ability_is_never_used_two_rounds_running_while_it_cools_down(self):
+    # Molten Blast has cooldown 2, so it can't be chosen the round after use.
+    used_blast, used_basic = 0, 0
 
-    for _ in range(4):
-      combat.plan_enemy_actions()
-      results = combat.resolve_round()
-      used.append(
-        "blast" if MOLTEN_BLAST.name in results[0].description else "basic"
-      )
+    for seed in range(12):
+      molten = seeded(MOLTEN_ELEMENTAL.clone(), seed)
+      hero = Character("Target", "Test", 10_000, 0, 0, 5)
+      combat = Combat([hero], [molten])
+      previous = None
 
-    self.assertEqual(used, ["blast", "basic", "blast", "basic"])
+      for _ in range(8):
+        combat.plan_enemy_actions()
+        results = combat.resolve_round()
+        current = "blast" if MOLTEN_BLAST.name in results[0].description else "basic"
+        self.assertFalse(previous == "blast" and current == "blast")
+        used_blast += current == "blast"
+        used_basic += current == "basic"
+        previous = current
+
+    self.assertGreater(used_blast, 0)
+    self.assertGreater(used_basic, 0)
 
   def test_basic_attack_is_available_every_single_round(self):
     ravager = seeded(DEVIATE_RAVAGER.clone())

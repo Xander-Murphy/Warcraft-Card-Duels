@@ -18,10 +18,10 @@ class EnemyBehavior(ABC):
 
 
 class RandomBehavior(EnemyBehavior):
-  """Uses a random ready ability on a random valid target.
+  """Uses a random usable ability on a random valid target.
 
-  If none of the enemy's abilities are ready (or it has none), it uses its
-  basic attack instead.
+  The basic attack, which is always available, counts as one more option
+  alongside the enemy's ready abilities, so each is equally likely.
 
   `rng` is an optional random.Random, so tests can make choices repeatable.
   By default the shared `random` module is used.

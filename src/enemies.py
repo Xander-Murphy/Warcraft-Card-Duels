@@ -31,6 +31,6 @@ class Enemy(Character):
       behavior if behavior is not None else RandomBehavior()
     )
 
-    # A custom fallback attack (for bosses, say) replaces the default one
+    # A custom basic attack (for bosses, say) replaces the default one
     if basic_attack is not None:
       self.basic_attack = basic_attack

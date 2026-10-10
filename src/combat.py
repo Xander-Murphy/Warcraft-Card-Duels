@@ -76,7 +76,7 @@ class Combat:
     return self._can_act(actor, ability) and self.action_for(actor) is None
 
   def _can_act(self, actor, ability):
-    # can_use covers ownership, cooldown, and the basic-attack fallback rule
+    # can_use covers ownership and cooldown (the basic attack is always usable)
     return (
       not self.is_over()
       and self._is_in_fight(actor)
