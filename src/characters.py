@@ -42,6 +42,9 @@ class Character(Prototype):
   def is_alive(self):
      return self.health > 0
 
+  def has_ability(self, ability):
+    return any(ability is owned for owned in self.abilities)
+
   def get_stat(self, stat):
     """Base attack/defense/speed plus any active buffs and debuffs."""
     base = {
