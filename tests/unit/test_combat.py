@@ -495,5 +495,199 @@ class TestVictoryAndDefeat(unittest.TestCase):
     self.assertEqual(combat.round_number, 1)
 
 
+def cool_down_everything(character):
+  for ability in character.abilities:
+    ability.use()
+
+
+class TestBasicAttackFallback(unittest.TestCase):
+
+  def test_hero_cannot_use_the_basic_attack_while_an_ability_is_ready(self):
+    combat, heroes, enemies = standard_fight()
+
+    self.assertFalse(combat.can_queue(heroes[0], heroes[0].basic_attack))
+    self.assertIsNone(
+      combat.queue_action(heroes[0], heroes[0].basic_attack, [enemies[0]])
+    )
+
+  def test_hero_can_use_the_basic_attack_when_every_ability_is_on_cooldown(self):
+    combat, heroes, enemies = standard_fight()
+    cool_down_everything(heroes[1])
+
+    action = combat.queue_action(
+      heroes[1], heroes[1].basic_attack, [enemies[0]]
+    )
+
+    self.assertIsNotNone(action)
+
+  def test_enemy_cannot_be_queued_with_the_basic_attack_while_an_ability_is_ready(self):
+    combat, heroes, enemies = standard_fight()
+    trog = enemies[0]
+
+    self.assertIsNone(
+      combat.queue_action(trog, trog.basic_attack, [heroes[0]])
+    )
+
+  def test_basic_attack_hits_for_15_scaled_by_attack(self):
+    combat, heroes, enemies = standard_fight()
+    braeks = heroes[2]  # attack 19
+    cool_down_everything(braeks)
+    combat.queue_action(braeks, braeks.basic_attack, [enemies[1]])
+
+    results = combat.resolve_round()
+
+    self.assertEqual(results[0].amount, 18)  # round(15 * 1.19)
+
+  def test_a_hero_with_everything_on_cooldown_no_longer_blocks_the_round(self):
+    # Regression: Genjo and Braeks could reach a round where no ability was
+    # ready, so the round could never be resolved.
+    genjo = GENJO.clone()
+    dummy = fighter("Dummy", health=100_000)
+    combat = Combat([genjo], [dummy])
+
+    for index in (1, 2, 0):  # Evasion, Cloak of Shadows, Backstab
+      combat.queue_action(genjo, genjo.abilities[index], [dummy])
+      combat.resolve_round()
+
+    self.assertEqual(genjo.usable_abilities(), [genjo.basic_attack])
+    self.assertFalse(combat.is_ready_to_resolve())
+
+    combat.queue_action(genjo, genjo.basic_attack, [dummy])
+
+    self.assertTrue(combat.is_ready_to_resolve())
+    self.assertGreater(len(combat.resolve_round()), 0)
+
+
+class TestCancelAndReplace(unittest.TestCase):
+
+  def test_cancel_removes_the_actors_action(self):
+    combat, heroes, enemies = standard_fight()
+    queued = combat.queue_action(heroes[0], heroes[0].abilities[0], [enemies[0]])
+
+    removed = combat.cancel_action(heroes[0])
+
+    self.assertIs(removed, queued)
+    self.assertIsNone(combat.action_for(heroes[0]))
+    self.assertEqual(combat.heroes_awaiting_orders()[0], heroes[0])
+
+  def test_cancel_with_nothing_queued_returns_none(self):
+    combat, heroes, _ = standard_fight()
+
+    self.assertIsNone(combat.cancel_action(heroes[0]))
+
+  def test_cancel_leaves_other_actions_alone(self):
+    combat, heroes, enemies = standard_fight()
+    combat.queue_action(heroes[0], heroes[0].abilities[0], [enemies[0]])
+    kept = combat.queue_action(heroes[1], heroes[1].abilities[0], [enemies[0]])
+
+    combat.cancel_action(heroes[0])
+
+    self.assertEqual(combat.combat_round.action_queue.actions, [kept])
+
+  def test_replace_swaps_the_old_action_for_the_new_one(self):
+    combat, heroes, enemies = standard_fight()
+    koryne = heroes[0]
+    combat.queue_action(koryne, koryne.abilities[0], [enemies[0]])
+
+    new = combat.replace_action(koryne, koryne.abilities[1], enemies)
+
+    self.assertIsNotNone(new)
+    self.assertIs(combat.action_for(koryne), new)
+    self.assertEqual(len(combat.combat_round.action_queue.actions), 1)
+
+  def test_replace_works_even_with_nothing_queued(self):
+    combat, heroes, enemies = standard_fight()
+
+    new = combat.replace_action(heroes[0], heroes[0].abilities[0], [enemies[0]])
+
+    self.assertIs(combat.action_for(heroes[0]), new)
+
+  def test_a_rejected_replacement_keeps_the_original_action(self):
+    combat, heroes, enemies = standard_fight()
+    koryne = heroes[0]
+    original = combat.queue_action(koryne, koryne.abilities[0], [enemies[0]])
+    koryne.abilities[1].use()  # Arcane Explosion now on cooldown
+
+    result = combat.replace_action(koryne, koryne.abilities[1], enemies)
+
+    self.assertIsNone(result)
+    self.assertIs(combat.action_for(koryne), original)
+
+  def test_replacement_with_only_dead_targets_keeps_the_original(self):
+    combat, heroes, enemies = standard_fight()
+    koryne = heroes[0]
+    original = combat.queue_action(koryne, koryne.abilities[0], [enemies[0]])
+    enemies[1].take_damage(10_000)
+
+    result = combat.replace_action(koryne, koryne.abilities[0], [enemies[1]])
+
+    self.assertIsNone(result)
+    self.assertIs(combat.action_for(koryne), original)
+
+  def test_replace_cannot_give_a_hero_two_actions(self):
+    combat, heroes, enemies = standard_fight()
+    for ability in heroes[0].abilities[:2]:
+      combat.replace_action(heroes[0], ability, [enemies[0]])
+
+    self.assertEqual(len(combat.combat_round.action_queue.actions), 1)
+
+
+class TestTieBreaks(unittest.TestCase):
+
+  def test_heroes_win_ties_even_when_enemies_queued_first(self):
+    hero, enemy = fighter("Hero", speed=5), fighter("Enemy", speed=5)
+    combat = Combat([hero], [enemy])
+    combat.queue_action(enemy, enemy.abilities[0], [hero])   # enemy first
+    combat.queue_action(hero, hero.abilities[0], [enemy])
+
+    results = combat.resolve_round()
+
+    self.assertEqual([r.source for r in results], [hero, enemy])
+
+  def test_ties_within_a_side_follow_queue_order(self):
+    first, second = fighter("First"), fighter("Second")
+    enemy = fighter("Enemy", health=500)
+    combat = Combat([first, second], [enemy])
+    combat.queue_action(second, second.abilities[0], [enemy])
+    combat.queue_action(first, first.abilities[0], [enemy])
+
+    results = combat.resolve_round()
+
+    self.assertEqual([r.source for r in results], [second, first])
+
+  def test_speed_still_beats_side(self):
+    hero, enemy = fighter("Hero", speed=2), fighter("Enemy", speed=9)
+    combat = Combat([hero], [enemy])
+    combat.queue_action(hero, hero.abilities[0], [enemy])
+    combat.queue_action(enemy, enemy.abilities[0], [hero])
+
+    results = combat.resolve_round()
+
+    self.assertEqual([r.source for r in results], [enemy, hero])
+
+
+class TestWinner(unittest.TestCase):
+
+  def test_heroes_have_not_won_while_the_fight_continues(self):
+    combat, _, _ = standard_fight()
+
+    self.assertFalse(combat.heroes_won())
+
+  def test_heroes_won_when_every_enemy_is_dead(self):
+    combat, _, enemies = standard_fight()
+    for enemy in enemies:
+      enemy.take_damage(10_000)
+
+    self.assertTrue(combat.heroes_won())
+
+  def test_heroes_did_not_win_when_every_hero_is_dead(self):
+    combat, heroes, _ = standard_fight()
+    for hero in heroes:
+      hero.take_damage(10_000)
+
+    self.assertTrue(combat.is_over())
+    self.assertFalse(combat.heroes_won())
+
+
 if __name__ == "__main__":
   unittest.main()

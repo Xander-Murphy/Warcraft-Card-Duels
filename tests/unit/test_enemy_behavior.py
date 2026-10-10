@@ -2,7 +2,8 @@ import random
 import unittest
 
 from abilities import Ability
-from ability_data.enemy_abilities import BASIC_ATTACK, MOLTEN_BLAST
+from ability_data.common_abilities import BASIC_ATTACK
+from ability_data.enemy_abilities import MOLTEN_BLAST
 from ability_effects import DamageEffect, HealEffect
 from actions import Action
 from characters import Character
@@ -79,27 +80,28 @@ class TestBasicAttack(unittest.TestCase):
 
     self.assertEqual(result.amount, 17)  # round(15 * 1.11)
 
-  def test_enemy_owns_its_abilities_and_its_basic_attack_only(self):
+  def test_enemy_uses_its_ready_ability_and_only_falls_back_when_none_is_ready(self):
     trog, other = RAGEFIRE_TROG.clone(), RAGEFIRE_TROG.clone()
-    hero = KORYNE.clone()
+    smash = trog.abilities[0]  # cooldown 1
 
-    self.assertTrue(trog.has_ability(trog.abilities[0]))
-    self.assertTrue(trog.has_ability(trog.basic_attack))
-    self.assertFalse(trog.has_ability(other.abilities[0]))
-    self.assertFalse(trog.has_ability(other.basic_attack))
-    self.assertFalse(trog.has_ability(hero.abilities[0]))
+    self.assertTrue(trog.can_use(smash))
+    self.assertFalse(trog.can_use(trog.basic_attack))
 
-  def test_clone_keeps_ownership_of_its_own_basic_attack(self):
+    smash.use()
+
+    self.assertFalse(trog.can_use(smash))
+    self.assertTrue(trog.can_use(trog.basic_attack))
+    self.assertFalse(trog.can_use(other.abilities[0]))
+    self.assertFalse(trog.can_use(other.basic_attack))
+    self.assertFalse(trog.can_use(KORYNE.clone().abilities[0]))
+
+  def test_clone_uses_its_own_basic_attack(self):
     clone = MOLTEN_ELEMENTAL.clone()
+    clone.abilities[0].use()
 
-    self.assertTrue(clone.has_ability(clone.basic_attack))
-    self.assertFalse(clone.has_ability(MOLTEN_ELEMENTAL.basic_attack))
-
-  def test_heroes_only_own_their_listed_abilities(self):
-    hero = KORYNE.clone()
-
-    self.assertTrue(hero.has_ability(hero.abilities[0]))
-    self.assertFalse(hero.has_ability(BASIC_ATTACK))
+    self.assertTrue(clone.can_use(clone.basic_attack))
+    self.assertFalse(clone.can_use(MOLTEN_ELEMENTAL.basic_attack))
+    self.assertFalse(clone.can_use(BASIC_ATTACK))
 
 
 class TestRandomBehavior(unittest.TestCase):
@@ -336,7 +338,7 @@ class TestPlanEnemyActions(unittest.TestCase):
     trog = seeded(RAGEFIRE_TROG.clone())
     heroes = party()
     combat = Combat(heroes, [trog])
-    manual = combat.queue_action(trog, trog.basic_attack, [heroes[0]])
+    manual = combat.queue_action(trog, trog.abilities[0], [heroes[0]])
 
     planned = combat.plan_enemy_actions()
 

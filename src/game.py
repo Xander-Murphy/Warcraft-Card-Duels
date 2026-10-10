@@ -9,6 +9,7 @@ from screens.dungeon import DungeonScreen
 from screens.encounter import EncounterScreen
 from hero_data import *
 from screens.combat import CombatScreen
+from combat import Combat
 
 
 class Game:
@@ -28,6 +29,7 @@ class Game:
     self.current_encounter = 0
     self.total_encounters = 3
     self.current_enemies = []
+    self.combat = None  # the fight in progress (a Combat), if any
 
     # one screen instance per state; each owns its own UI-only state
     # (cursor position, etc.) and reads/writes the shared data above.
@@ -47,6 +49,13 @@ class Game:
     self.party = [hero.clone() for hero in self.selected_heroes]
     self.current_encounter = 0
     self.current_enemies = []
+
+  def start_combat(self):
+    """Begin a fight between the party and the current encounter's enemies."""
+    self.combat = Combat(self.party, self.current_enemies)
+
+  def end_combat(self):
+    self.combat = None
 
   def handle_events(self):
     for event in pygame.event.get():

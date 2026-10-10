@@ -321,5 +321,58 @@ class TestRoundEnd(unittest.TestCase):
     self.assertEqual(make_character().end_round(), [])
 
 
+class TestUsableAbilities(unittest.TestCase):
+
+  def make(self, *cooldowns):
+    from abilities import Ability
+    from lib.types import TargetType
+    abilities = [
+      Ability(f"A{i}", "", 10, cooldown, TargetType.SINGLE_ENEMY)
+      for i, cooldown in enumerate(cooldowns)
+    ]
+    return make_character(abilities=abilities)
+
+  def test_every_character_has_its_own_basic_attack(self):
+    first, second = make_character(), make_character()
+
+    self.assertEqual(first.basic_attack.name, "Basic Attack")
+    self.assertEqual(first.basic_attack.power, 15)
+    self.assertIsNot(first.basic_attack, second.basic_attack)
+
+  def test_ready_abilities_are_usable_and_the_basic_attack_is_not(self):
+    character = self.make(2, 3)
+
+    self.assertEqual(character.usable_abilities(), character.abilities)
+    self.assertFalse(character.can_use(character.basic_attack))
+
+  def test_abilities_on_cooldown_are_not_usable(self):
+    character = self.make(2, 3)
+    character.abilities[0].use()
+
+    self.assertEqual(character.usable_abilities(), [character.abilities[1]])
+    self.assertFalse(character.can_use(character.abilities[0]))
+    self.assertTrue(character.can_use(character.abilities[1]))
+
+  def test_basic_attack_is_the_fallback_when_nothing_is_ready(self):
+    character = self.make(2, 3)
+    for ability in character.abilities:
+      ability.use()
+
+    self.assertEqual(character.usable_abilities(), [character.basic_attack])
+    self.assertTrue(character.can_use(character.basic_attack))
+    self.assertFalse(character.can_use(character.abilities[0]))
+
+  def test_character_with_no_abilities_can_always_use_the_basic_attack(self):
+    character = make_character()
+
+    self.assertEqual(character.usable_abilities(), [character.basic_attack])
+
+  def test_other_characters_abilities_are_never_usable(self):
+    character, other = self.make(2), self.make(2)
+
+    self.assertFalse(character.can_use(other.abilities[0]))
+    self.assertFalse(character.can_use(other.basic_attack))
+
+
 if __name__ == "__main__":
   unittest.main()

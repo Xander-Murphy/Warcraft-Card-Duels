@@ -7,6 +7,7 @@ from .base import Screen
 class EncounterScreen(Screen):
   def handle_input(self, event, game):
     if event.key == pygame.K_RETURN:
+      game.start_combat()
       game.state = GameState.COMBAT
 
     elif event.key == pygame.K_ESCAPE:

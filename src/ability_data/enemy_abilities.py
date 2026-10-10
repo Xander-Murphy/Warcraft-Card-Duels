@@ -43,14 +43,3 @@ MOLTEN_BLAST = Ability(
   effects=[DamageEffect()]
 )
 
-
-# Every enemy can fall back on this when none of its abilities are ready.
-BASIC_ATTACK = Ability(
-  "Basic Attack",
-  "Deals physical damage to one enemy.",
-  15,
-  0,
-  TargetType.SINGLE_ENEMY,
-  SpellSchool.PHYSICAL,
-  effects=[DamageEffect()]
-)

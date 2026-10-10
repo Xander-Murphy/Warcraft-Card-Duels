@@ -1,3 +1,4 @@
+from ability_data.common_abilities import BASIC_ATTACK
 from ability_effects import EffectResult
 from lib.prototype import Prototype
 from lib.types import SpellSchool, EffectType, Stat
@@ -37,13 +38,23 @@ class Character(Prototype):
 
 
       self.abilities = abilities if abilities else []
+      # Used when none of the abilities are ready
+      self.basic_attack = BASIC_ATTACK.clone()
       self.active_effects = []
 
   def is_alive(self):
      return self.health > 0
 
-  def has_ability(self, ability):
-    return any(ability is owned for owned in self.abilities)
+  def usable_abilities(self):
+    """What this character can use right now.
+
+    The ready abilities, or just the basic attack if none are ready.
+    """
+    ready = [ability for ability in self.abilities if ability.is_ready()]
+    return ready if ready else [self.basic_attack]
+
+  def can_use(self, ability):
+    return any(ability is usable for usable in self.usable_abilities())
 
   def get_stat(self, stat):
     """Base attack/defense/speed plus any active buffs and debuffs."""

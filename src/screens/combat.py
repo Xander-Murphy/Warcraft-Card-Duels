@@ -1,280 +1,240 @@
 import pygame
 
 from states import GameState
-from lib.colors import WHITE, GOLD, GREEN, GRAY
-from actions import Action
-from combat_round import CombatRound
-from targeting import Battlefield, resolver_for
+from lib.colors import WHITE, GOLD, GREEN, GRAY, RED
+from combat_controller import (
+  AbilitySelection, CombatController, HeroSelection, TargetSelection
+)
 from .base import Screen
 
+LOG_LINES = 6  # how many lines of the last round's results to show
+
+
 class CombatScreen(Screen):
+  """Shows a fight and turns key presses into controller calls.
+
+  All the rules live in Combat and all the cursor logic in CombatController;
+  this class only maps keys to the controller and draws what it reports.
+  """
+
   def __init__(self):
-    self.hero_selection = 0
-    self.ability_selection = 0
-    self.target_selection = 0
+    self.controller = None
 
-    self.selection_mode = "hero"
+  def _controller_for(self, game):
+    """The controller for the fight in progress (a new one for each new fight)."""
+    if game.combat is None:
+      self.controller = None
+    elif self.controller is None or self.controller.combat is not game.combat:
+      self.controller = CombatController(game.combat)
 
-    self.combat_round = CombatRound()
+    return self.controller
 
-  def _navigate_selection(self, event, selection, item_count):
+  def handle_input(self, event, game):
+    controller = self._controller_for(game)
+
+    if controller is None:
+      return
+
     match event.key:
       case pygame.K_LEFT | pygame.K_a:
-        selection -= 1
-
+        controller.move(-1)
       case pygame.K_RIGHT | pygame.K_d:
-        selection += 1
+        controller.move(1)
+      case pygame.K_SPACE:
+        controller.confirm()
+      case pygame.K_ESCAPE:
+        controller.cancel()
+      case pygame.K_RETURN:
+        self._handle_enter(controller, game)
 
-    return selection % item_count
-  
-  def _has_queued_action(self, hero):
-    return any(
-      action.actor is hero
-      for action in self.combat_round.action_queue.actions
+  def _handle_enter(self, controller, game):
+    if not controller.is_over:
+      controller.resolve_round()
+      return
+
+    # The fight is over: a win goes back to the dungeon, a loss to the menu
+    game.end_combat()
+    game.state = (
+      GameState.DUNGEON if controller.heroes_won else GameState.MAIN_MENU
     )
-  
-  def _get_positions(self, count, center_x=500, spacing= 250):
+
+  # --- Drawing ------------------------------------------------------------
+
+  def _get_positions(self, count, center_x=500, spacing=250):
     if count == 0:
       return []
 
     total_width = (count - 1) * spacing
     start_x = center_x - total_width / 2
 
-    return [
-      (start_x + index * spacing)
-      for index in range(count)
-    ]
+    return [start_x + index * spacing for index in range(count)]
 
-  def _selected_hero(self, game):
-    return game.party[self.hero_selection]
-
-  def _selected_ability(self, game):
-    return self._selected_hero(game).abilities[self.ability_selection]
-
-  def _resolver(self, game):
-    return resolver_for(self._selected_ability(game).target_type)
-
-  def _battlefield(self, game):
-    return Battlefield(game.party, game.current_enemies)
-
-  def _target_candidates(self, game):
-    return self._resolver(game).candidates(
-      self._selected_hero(game),
-      self._battlefield(game)
-    )
-
-  def _highlighted_target(self, game):
-    """The character under the target cursor, or None outside target mode."""
-    if self.selection_mode != "target" or not game.party:
-      return None
-
-    candidates = self._target_candidates(game)
-
-    if not candidates:
-      return None
-
-    return candidates[self.target_selection % len(candidates)]
-
-  def _confirm_ability(self, game):
-    resolver = self._resolver(game)
-
-    if resolver.requires_choice:
-      # Player picks the target (if there is anyone to pick)
-      if self._target_candidates(game):
-        self.selection_mode = "target"
-        self.target_selection = 0
-    else:
-      # Self / all-allies / all-enemies need no choice, so queue straight away
-      self._queue_action(game, resolver.resolve(
-        self._selected_hero(game),
-        self._battlefield(game)
-      ))
-
-  def _queue_action(self, game, targets):
-    if not targets:
-      return
-
-    self.combat_round.add_action(Action(
-      self._selected_hero(game),
-      self._selected_ability(game),
-      targets
-    ))
-    self.selection_mode = "hero"
-
-  def handle_input(self, event, game):
-    if not game.party:
-      return
-    # Controls hero selection
-    if self.selection_mode == "hero":
-      match event.key:
-        case pygame.K_LEFT | pygame.K_a | pygame.K_RIGHT | pygame.K_d:
-          self.hero_selection = self._navigate_selection(
-            event,
-            self.hero_selection,
-            len(game.party)
-          )
-        case pygame.K_SPACE:
-            self.selection_mode = "ability"
-            self.ability_selection = 0
-            
-    # Controls ability selection for selected heroes
-    elif self.selection_mode == "ability":
-      selected_hero = game.party[self.hero_selection]
-
-      match event.key:
-        case pygame.K_LEFT | pygame.K_a | pygame.K_RIGHT | pygame.K_d:
-          self.ability_selection = self._navigate_selection(
-            event,
-            self.ability_selection,
-            len(selected_hero.abilities)
-          )
-        case pygame.K_SPACE:
-          self._confirm_ability(game)
-        case pygame.K_ESCAPE:
-          self.selection_mode = "hero"
-
-    elif self.selection_mode == "target":
-      candidates = self._target_candidates(game)
-
-      if not candidates:
-        self.selection_mode = "ability"
-        return
-
-      match event.key:
-        case pygame.K_LEFT | pygame.K_a | pygame.K_RIGHT | pygame.K_d:
-          self.target_selection = self._navigate_selection(
-            event,
-            self.target_selection,
-            len(candidates)
-          )
-        case pygame.K_SPACE:
-          self._queue_action(game, self._resolver(game).resolve(
-            self._selected_hero(game),
-            self._battlefield(game),
-            self.target_selection
-          ))
-        case pygame.K_ESCAPE:
-          self.selection_mode = "ability"
+  def _text(self, screen, font, text, color, center):
+    rendered = font.render(text, True, color)
+    screen.blit(rendered, rendered.get_rect(center=center))
 
   def draw(self, screen, game):
-    title_font = pygame.font.Font(None, 48)
-    character_font = pygame.font.Font(None, 32)
-    info_font = pygame.font.Font(None, 24)
+    controller = self._controller_for(game)
 
-    # Title
-    title = title_font.render(
-      f"{game.selected_dungeon} - Combat",
-      True,
-      WHITE
+    if controller is None:
+      return
+
+    fonts = {
+      "title": pygame.font.Font(None, 48),
+      "banner": pygame.font.Font(None, 80),
+      "name": pygame.font.Font(None, 32),
+      "info": pygame.font.Font(None, 24),
+    }
+
+    self._draw_header(screen, fonts, controller, game)
+    self._draw_enemies(screen, fonts, controller)
+    self._draw_log_and_banner(screen, fonts, controller)
+    self._draw_heroes(screen, fonts, controller)
+    self._draw_abilities(screen, fonts, controller)
+    self._draw_prompts(screen, fonts, controller)
+
+  def _draw_header(self, screen, fonts, controller, game):
+    self._text(
+      screen, fonts["title"], f"{game.selected_dungeon} - Combat", WHITE, (500, 40)
     )
-    title_rect = title.get_rect(center=(500, 50))
-    screen.blit(title, title_rect)
+    self._text(
+      screen, fonts["info"], f"Round {controller.combat.round_number}",
+      GRAY, (500, 78)
+    )
 
-    target = self._highlighted_target(game)
+  def _name_color(self, character, highlighted):
+    if not character.is_alive():
+      return GRAY
 
-    # Enemies
-    enemy_positions = self._get_positions(len(game.current_enemies))
+    return GOLD if highlighted else WHITE
 
-    for index, enemy in enumerate(game.current_enemies):
-      if enemy is target:
-          enemy_color = GOLD
-      else:
-          enemy_color = WHITE
+  def _health_text(self, character):
+    if not character.is_alive():
+      return "Defeated"
 
-      enemy_text = character_font.render(
-          enemy.name,
-          True,
-          enemy_color
+    return f"HP {character.health}/{character.max_health}"
+
+  def _draw_enemies(self, screen, fonts, controller):
+    enemies = controller.combat.enemies
+    target = controller.highlighted_target()
+
+    for enemy, x in zip(enemies, self._get_positions(len(enemies))):
+      self._text(
+        screen, fonts["name"], enemy.name,
+        self._name_color(enemy, enemy is target), (x, 130)
       )
-      enemy_rect = enemy_text.get_rect(
-        center=(enemy_positions[index], 180)
+      self._text(
+        screen, fonts["info"], self._health_text(enemy), GRAY, (x, 158)
       )
-      screen.blit(enemy_text, enemy_rect)
 
-    # Heroes
-    for index, hero in enumerate(game.party):
+      # What this enemy plans to do this round
+      if enemy.is_alive():
+        self._text(
+          screen, fonts["info"], controller.intent_text(enemy), RED, (x, 184)
+        )
+
+  def _draw_log_and_banner(self, screen, fonts, controller):
+    if controller.is_over:
+      won = controller.heroes_won
+      self._text(
+        screen, fonts["banner"], "VICTORY" if won else "DEFEAT",
+        GREEN if won else RED, (500, 250)
+      )
+
+    for index, result in enumerate(controller.log[-LOG_LINES:]):
+      self._text(
+        screen, fonts["info"], result.description, GRAY, (500, 310 + index * 24)
+      )
+
+  def _draw_heroes(self, screen, fonts, controller):
+    heroes = controller.combat.heroes
+    target = controller.highlighted_target()
+
+    for index, (hero, x) in enumerate(
+      zip(heroes, self._get_positions(len(heroes)))
+    ):
       if target is not None:
-        hero_color = GOLD if hero is target else WHITE
-      elif index == self.hero_selection:
-        hero_color = GOLD
+        highlighted = hero is target
       else:
-        hero_color = WHITE
+        highlighted = index == controller.hero_index and not controller.is_over
 
-      hero_text = character_font.render(
-        hero.name,
-        True,
-        hero_color
+      self._text(
+        screen, fonts["name"], hero.name,
+        self._name_color(hero, highlighted), (x, 470)
+      )
+      self._text(
+        screen, fonts["info"], self._health_text(hero), GRAY, (x, 498)
       )
 
-      hero_rect = hero_text.get_rect(
-        center=(250 + index * 250, 450)
+      # The action this hero has chosen for this round
+      if hero.is_alive():
+        self._text(
+          screen, fonts["info"], controller.queued_text(hero), GREEN, (x, 522)
+        )
+
+  def _ability_label(self, controller, ability):
+    if controller.is_usable(ability):
+      return ability.name
+
+    if ability is controller.selected_hero.basic_attack:
+      return f"{ability.name} (locked)"
+
+    return f"{ability.name} (CD {ability.current_cooldown})"
+
+  def _draw_abilities(self, screen, fonts, controller):
+    if controller.is_over:
+      return
+
+    abilities = controller.selectable_abilities
+    choosing = isinstance(controller.state, (AbilitySelection, TargetSelection))
+
+    for index, (ability, x) in enumerate(
+      zip(abilities, self._get_positions(len(abilities)))
+    ):
+      selected = choosing and index == controller.ability_index
+
+      if selected:
+        color = GOLD
+      elif controller.is_usable(ability):
+        color = WHITE
+      else:
+        color = GRAY
+
+      self._text(
+        screen, fonts["info"], self._ability_label(controller, ability),
+        color, (x, 565)
       )
 
-      screen.blit(hero_text, hero_rect)
-
-      # Draw abilities for selected hero
-      if game.party:
-        selected_hero = game.party[self.hero_selection]
-
-        ability_positions = self._get_positions(
-          len(selected_hero.abilities)
-        )
-
-        for index, abilty in enumerate(selected_hero.abilities):
-          if (
-            self.selection_mode == "ability" and index == self.ability_selection
-          ):
-            ability_color = GOLD
-          else:
-            ability_color = WHITE
-
-          ability_text = info_font.render(
-            abilty.name,
-            True,
-            ability_color
-          )
-
-          abilty_rect = ability_text.get_rect(
-            center=(ability_positions[index], 520)
-          )
-          screen.blit(ability_text,abilty_rect)
-
-      # Draw ability description
-      if self.selection_mode == "ability":
-        selected_hero = game.party[self.hero_selection]
-        selected_ability = selected_hero.abilities[self.ability_selection]
-
-        description_text = info_font.render(
-          selected_ability.description,
-          True,
-          WHITE
-        )
-
-        description_rect = description_text.get_rect(
-          center=(500, 570)
-        )
-        screen.blit(description_text, description_rect)
-
-      if self.selection_mode == "target":
-        target_text = info_font.render(
-          "Select a target",
-          True,
-          GOLD
-        )
-
-        target_rect = target_text.get_rect(
-          center=(500, 600)
-        )
-        screen.blit(target_text, target_rect)
-
-      # Instructions
-      instruction_text = info_font.render(
-        "Arorw Keys / WASD: Select Hero | Space: Abilities",
-        True,
-        GRAY
-      )
-      instruction_rect = instruction_text.get_rect(
-        center=(500, 670)
+    if isinstance(controller.state, AbilitySelection):
+      self._text(
+        screen, fonts["info"], self._ability_description(controller),
+        WHITE, (500, 600)
       )
 
-      screen.blit(instruction_text, instruction_rect)
+  def _ability_description(self, controller):
+    ability = controller.selected_ability
+
+    if controller.is_usable(ability):
+      return ability.description
+
+    if ability is controller.selected_hero.basic_attack:
+      return "Only usable when none of this hero's abilities are ready"
+
+    return f"On cooldown: {ability.current_cooldown} more round(s)"
+
+  def _draw_prompts(self, screen, fonts, controller):
+    state = controller.state
+
+    if isinstance(state, TargetSelection):
+      self._text(screen, fonts["info"], "Select a target", GOLD, (500, 635))
+    elif isinstance(state, HeroSelection) and not controller.can_resolve:
+      self._text(
+        screen, fonts["info"], "Choose an action for every hero",
+        GRAY, (500, 635)
+      )
+    elif isinstance(state, HeroSelection):
+      self._text(
+        screen, fonts["info"], "Everyone is ready: press Enter", GOLD, (500, 635)
+      )
+
+    self._text(screen, fonts["info"], state.hint, GRAY, (500, 675))

@@ -43,12 +43,7 @@ class RandomBehavior(EnemyBehavior):
     return Action(enemy, ability, targets)
 
   def _choose_ability(self, enemy):
-    ready = [ability for ability in enemy.abilities if ability.is_ready()]
-
-    if not ready:
-      return enemy.basic_attack
-
-    return self._random().choice(ready)
+    return self._random().choice(enemy.usable_abilities())
 
   def _choose_targets(self, enemy, ability, battlefield):
     resolver = resolver_for(ability.target_type)

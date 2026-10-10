@@ -16,6 +16,10 @@ class Combat:
   was used in. A cooldown of 1 can therefore be used every round, 2 every
   other round, and so on.
 
+  When two actions have the same priority the heroes' action goes first, and
+  otherwise the one queued first. (Enemies may queue before the player picks
+  their actions, so this is spelled out rather than left to queue order.)
+
   This class knows nothing about pygame, so it can be tested without a display.
   """
 
@@ -44,6 +48,10 @@ class Combat:
     """True once either side has no one left standing."""
     return not self.living_heroes() or not self.living_enemies()
 
+  def heroes_won(self):
+    """True if the fight is over and at least one hero is still standing."""
+    return self.is_over() and bool(self.living_heroes())
+
   # --- Planning the round -------------------------------------------------
 
   def action_for(self, actor):
@@ -65,13 +73,15 @@ class Combat:
     return not self.is_over() and not self.heroes_awaiting_orders()
 
   def can_queue(self, actor, ability):
+    return self._can_act(actor, ability) and self.action_for(actor) is None
+
+  def _can_act(self, actor, ability):
+    # can_use covers ownership, cooldown, and the basic-attack fallback rule
     return (
       not self.is_over()
       and self._is_in_fight(actor)
       and actor.is_alive()
-      and actor.has_ability(ability)
-      and ability.is_ready()
-      and self.action_for(actor) is None
+      and actor.can_use(ability)
     )
 
   def queue_action(self, actor, ability, targets):
@@ -93,6 +103,29 @@ class Combat:
     self.combat_round.add_action(action)
     return action
 
+  def cancel_action(self, actor):
+    """Remove `actor`'s queued action. Returns it, or None if they had none."""
+    action = self.action_for(actor)
+
+    if action is not None:
+      self.combat_round.action_queue.remove_action(action)
+
+    return action
+
+  def replace_action(self, actor, ability, targets):
+    """Queue an action, swapping out any the actor already has.
+
+    If the new action isn't allowed, nothing changes: the old action stays.
+    Returns the new Action, or None.
+    """
+    action = Action(actor, ability, targets)
+
+    if not self._can_act(actor, ability) or not action.has_living_target():
+      return None
+
+    self.cancel_action(actor)
+    return self.add_action(action)
+
   def plan_enemy_actions(self):
     """Let every living enemy that has no orders yet choose its action.
 
@@ -112,6 +145,9 @@ class Combat:
 
     return planned
 
+  def _is_hero(self, actor):
+    return any(actor is hero for hero in self.heroes)
+
   def _is_in_fight(self, actor):
     return any(actor is member for member in self.heroes + self.enemies)
 
@@ -128,8 +164,12 @@ class Combat:
     if self.is_over():
       return results
 
-    self.combat_round.prepare()
     queue = self.combat_round.action_queue
+
+    # Heroes first, so they win ties however the queue was filled. The sort
+    # is stable, so queue order still decides ties within a side.
+    queue.actions.sort(key=lambda action: not self._is_hero(action.actor))
+    self.combat_round.prepare()
 
     while (action := queue.get_next_action()) is not None:
       if self.is_over():

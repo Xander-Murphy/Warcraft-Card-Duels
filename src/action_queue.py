@@ -5,6 +5,10 @@ class ActionQueue:
   def add_action(self, action):
     self.actions.append(action)
 
+  def remove_action(self, action):
+    if action in self.actions:
+      self.actions.remove(action)
+
   def sort_actions(self):
     self.actions.sort(
       key=lambda action: action.priority,
