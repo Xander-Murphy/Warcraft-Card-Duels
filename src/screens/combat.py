@@ -2,9 +2,9 @@ import pygame
 
 from states import GameState
 from lib.colors import WHITE, GOLD, GREEN, GRAY
-from lib.types import TargetType
 from actions import Action
 from combat_round import CombatRound
+from targeting import Battlefield, resolver_for
 from .base import Screen
 
 class CombatScreen(Screen):
@@ -45,6 +45,62 @@ class CombatScreen(Screen):
       for index in range(count)
     ]
 
+  def _selected_hero(self, game):
+    return game.party[self.hero_selection]
+
+  def _selected_ability(self, game):
+    return self._selected_hero(game).abilities[self.ability_selection]
+
+  def _resolver(self, game):
+    return resolver_for(self._selected_ability(game).target_type)
+
+  def _battlefield(self, game):
+    return Battlefield(game.party, game.current_enemies)
+
+  def _target_candidates(self, game):
+    return self._resolver(game).candidates(
+      self._selected_hero(game),
+      self._battlefield(game)
+    )
+
+  def _highlighted_target(self, game):
+    """The character under the target cursor, or None outside target mode."""
+    if self.selection_mode != "target" or not game.party:
+      return None
+
+    candidates = self._target_candidates(game)
+
+    if not candidates:
+      return None
+
+    return candidates[self.target_selection % len(candidates)]
+
+  def _confirm_ability(self, game):
+    resolver = self._resolver(game)
+
+    if resolver.requires_choice:
+      # Player picks the target (if there is anyone to pick)
+      if self._target_candidates(game):
+        self.selection_mode = "target"
+        self.target_selection = 0
+    else:
+      # Self / all-allies / all-enemies need no choice, so queue straight away
+      self._queue_action(game, resolver.resolve(
+        self._selected_hero(game),
+        self._battlefield(game)
+      ))
+
+  def _queue_action(self, game, targets):
+    if not targets:
+      return
+
+    self.combat_round.add_action(Action(
+      self._selected_hero(game),
+      self._selected_ability(game),
+      targets
+    ))
+    self.selection_mode = "hero"
+
   def handle_input(self, event, game):
     if not game.party:
       return
@@ -73,36 +129,32 @@ class CombatScreen(Screen):
             len(selected_hero.abilities)
           )
         case pygame.K_SPACE:
-          self.selection_mode = "target"
-          self.target_selection = 0
+          self._confirm_ability(game)
         case pygame.K_ESCAPE:
           self.selection_mode = "hero"
 
     elif self.selection_mode == "target":
-      selected_hero = game.party[self.hero_selection]
-      selected_ability = selected_hero.abilities[self.ability_selection]
+      candidates = self._target_candidates(game)
 
-      if selected_ability.target_type == TargetType.SINGLE_ENEMY:
-        match event.key:
-          case pygame.K_LEFT | pygame.K_a | pygame.K_RIGHT | pygame.K_d:
-            self.target_selection = self._navigate_selection(
-              event,
-              self.target_selection,
-              len(game.current_enemies)
-            )
-          case pygame.K_SPACE:
-            target = game.current_enemies[self.target_selection]
+      if not candidates:
+        self.selection_mode = "ability"
+        return
 
-            action = Action(
-              selected_hero,
-              selected_ability,
-              [target]
-            )
-
-            self.combat_round.add_action(action)
-            self.selection_mode = "hero"
-          case pygame.K_ESCAPE:
-            self.selection_mode = "ability"
+      match event.key:
+        case pygame.K_LEFT | pygame.K_a | pygame.K_RIGHT | pygame.K_d:
+          self.target_selection = self._navigate_selection(
+            event,
+            self.target_selection,
+            len(candidates)
+          )
+        case pygame.K_SPACE:
+          self._queue_action(game, self._resolver(game).resolve(
+            self._selected_hero(game),
+            self._battlefield(game),
+            self.target_selection
+          ))
+        case pygame.K_ESCAPE:
+          self.selection_mode = "ability"
 
   def draw(self, screen, game):
     title_font = pygame.font.Font(None, 48)
@@ -118,14 +170,13 @@ class CombatScreen(Screen):
     title_rect = title.get_rect(center=(500, 50))
     screen.blit(title, title_rect)
 
+    target = self._highlighted_target(game)
+
     # Enemies
     enemy_positions = self._get_positions(len(game.current_enemies))
 
     for index, enemy in enumerate(game.current_enemies):
-      if (
-          self.selection_mode == "target"
-          and index == self.target_selection
-      ):
+      if enemy is target:
           enemy_color = GOLD
       else:
           enemy_color = WHITE
@@ -142,7 +193,9 @@ class CombatScreen(Screen):
 
     # Heroes
     for index, hero in enumerate(game.party):
-      if index == self.hero_selection:
+      if target is not None:
+        hero_color = GOLD if hero is target else WHITE
+      elif index == self.hero_selection:
         hero_color = GOLD
       else:
         hero_color = WHITE

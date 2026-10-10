@@ -33,7 +33,7 @@ class TestAbilityEffectContract(unittest.TestCase):
 
   def test_abstract_effect_cannot_be_instantiated(self):
     with self.assertRaises(TypeError):
-      AbilityEffect()
+      AbilityEffect()  # pyright: ignore[reportAbstractUsage]
 
   def test_all_effects_share_the_interface(self):
     for effect in (DamageEffect(), HealEffect()):

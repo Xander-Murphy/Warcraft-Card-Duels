@@ -23,7 +23,7 @@ class Game:
     self.party = []  # cloned copies of those heroes used in a dungeon run
 
     self.available_dungeons = ["Ragefire Chasm", "Wailing Caverns", "The Deadmines"]
-    self.selected_dungeon = None
+    self.selected_dungeon: str | None = None
 
     self.current_encounter = 0
     self.total_encounters = 3

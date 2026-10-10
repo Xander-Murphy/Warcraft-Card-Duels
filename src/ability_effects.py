@@ -22,7 +22,7 @@ class AbilityEffect(ABC):
   """
 
   @abstractmethod
-  def apply(self, source, target, ability):
+  def apply(self, source, target, ability) -> EffectResult:
     """Apply the effect and return an EffectResult."""
 
 
