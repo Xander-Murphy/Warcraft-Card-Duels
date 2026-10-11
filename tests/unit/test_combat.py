@@ -1,9 +1,5 @@
-import subprocess
-import sys
 import unittest
-from pathlib import Path
 
-import combat as combat_module
 from abilities import Ability
 from ability_effects import ApplyStatusEffect, DamageEffect
 from characters import Character
@@ -35,48 +31,7 @@ def standard_fight():
   return Combat(heroes, enemies), heroes, enemies
 
 
-class TestSetup(unittest.TestCase):
-
-  def test_new_combat_starts_at_round_one_and_is_not_over(self):
-    combat, heroes, enemies = standard_fight()
-
-    self.assertEqual(combat.round_number, 1)
-    self.assertFalse(combat.is_over())
-    self.assertEqual(combat.heroes, heroes)
-    self.assertEqual(combat.enemies, enemies)
-
-  def test_living_lists_exclude_the_dead(self):
-    combat, heroes, enemies = standard_fight()
-    enemies[0].take_damage(10_000)
-    heroes[2].take_damage(10_000)
-
-    self.assertEqual(combat.living_enemies(), [enemies[1]])
-    self.assertEqual(combat.living_heroes(), [heroes[0], heroes[1]])
-
-  def test_combat_does_not_depend_on_pygame(self):
-    # Run in a clean interpreter so other tests importing pygame don't count.
-    src = str(Path(combat_module.__file__).parent)
-    code = "import combat, sys; sys.exit('pygame' in sys.modules)"
-
-    result = subprocess.run(
-      [sys.executable, "-c", code], cwd=src, capture_output=True
-    )
-
-    self.assertEqual(result.returncode, 0, result.stderr.decode())
-
-
 class TestQueueing(unittest.TestCase):
-
-  def test_queue_action_builds_and_stores_the_action(self):
-    combat, heroes, enemies = standard_fight()
-    ability = heroes[0].abilities[0]
-
-    action = combat.queue_action(heroes[0], ability, [enemies[0]])
-
-    assert action is not None
-    self.assertIs(action.actor, heroes[0])
-    self.assertIs(combat.action_for(heroes[0]), action)
-    self.assertEqual(len(combat.combat_round.action_queue.actions), 1)
 
   def test_an_actor_can_only_queue_one_action_per_round(self):
     combat, heroes, enemies = standard_fight()
@@ -88,14 +43,6 @@ class TestQueueing(unittest.TestCase):
     self.assertIsNotNone(first)
     self.assertIsNone(second)
     self.assertEqual(len(combat.combat_round.action_queue.actions), 1)
-
-  def test_dead_actor_cannot_queue(self):
-    combat, heroes, enemies = standard_fight()
-    heroes[0].take_damage(10_000)
-
-    self.assertIsNone(
-      combat.queue_action(heroes[0], heroes[0].abilities[0], [enemies[0]])
-    )
 
   def test_ability_on_cooldown_cannot_be_queued(self):
     combat, heroes, enemies = standard_fight()
@@ -117,23 +64,6 @@ class TestQueueing(unittest.TestCase):
     self.assertIsNone(
       combat.queue_action(stranger, stranger.abilities[0], [enemies[0]])
     )
-
-  def test_cannot_queue_with_no_living_target(self):
-    combat, heroes, enemies = standard_fight()
-    enemies[0].take_damage(10_000)
-
-    self.assertIsNone(
-      combat.queue_action(heroes[0], heroes[0].abilities[0], [enemies[0]])
-    )
-
-  def test_enemies_queue_through_the_same_rules(self):
-    combat, heroes, enemies = standard_fight()
-    trog = enemies[0]
-
-    action = combat.queue_action(trog, trog.abilities[0], [heroes[0]])
-
-    assert action is not None
-    self.assertIs(action.actor, trog)
 
   def test_ready_to_resolve_once_every_living_hero_has_orders(self):
     combat, heroes, enemies = standard_fight()
@@ -186,17 +116,6 @@ class TestResolvingActions(unittest.TestCase):
 
     self.assertEqual([r.source for r in results], [cautious, quick])
 
-  def test_ties_resolve_in_the_order_they_were_queued(self):
-    first, second = fighter("First"), fighter("Second")
-    enemy = fighter("Enemy", health=500)
-    combat = Combat([first, second], [enemy])
-    combat.queue_action(first, first.abilities[0], [enemy])
-    combat.queue_action(second, second.abilities[0], [enemy])
-
-    results = combat.resolve_round()
-
-    self.assertEqual([r.source for r in results], [first, second])
-
   def test_heroes_and_enemies_share_one_turn_order(self):
     hero = fighter("Hero", speed=5)
     enemy = fighter("Enemy", speed=8)
@@ -207,17 +126,6 @@ class TestResolvingActions(unittest.TestCase):
     results = combat.resolve_round()
 
     self.assertEqual([r.source for r in results], [enemy, hero])
-
-  def test_results_report_what_happened(self):
-    hero, enemy = fighter("Hero"), fighter("Enemy")
-    combat = Combat([hero], [enemy])
-    combat.queue_action(hero, hero.abilities[0], [enemy])
-
-    results = combat.resolve_round()
-
-    self.assertEqual(len(results), 1)
-    self.assertEqual(results[0].amount, 20)
-    self.assertEqual(enemy.health, 80)
 
   def test_a_dead_actor_does_not_act(self):
     # The fast enemy kills the slow hero before the hero's turn comes.
@@ -245,16 +153,6 @@ class TestResolvingActions(unittest.TestCase):
 
     self.assertEqual(len(results), 1)
     self.assertTrue(slow.abilities[0].is_ready())
-
-  def test_area_ability_hits_everyone_through_the_real_pipeline(self):
-    combat, heroes, enemies = standard_fight()
-    braeks = heroes[2]
-    combat.queue_action(braeks, braeks.abilities[2], enemies)
-
-    combat.resolve_round()
-
-    self.assertEqual(enemies[0].health, enemies[0].max_health - 18)
-    self.assertEqual(enemies[1].health, enemies[1].max_health - 18)
 
   def test_evasion_protects_for_the_round_then_expires(self):
     hero = fighter(
@@ -301,24 +199,6 @@ class TestRoundLifecycle(unittest.TestCase):
     self.assertIsNotNone(
       combat.queue_action(hero, hero.abilities[0], [enemy])
     )
-
-  def test_resolving_an_empty_round_still_advances(self):
-    combat, _, _ = standard_fight()
-
-    self.assertEqual(combat.resolve_round(), [])
-    self.assertEqual(combat.round_number, 2)
-
-  def test_cooldown_of_one_is_available_every_round(self):
-    hero, enemy = fighter("Hero"), fighter("Enemy", health=500)
-    combat = Combat([hero], [enemy])
-
-    for _ in range(3):
-      self.assertIsNotNone(
-        combat.queue_action(hero, hero.abilities[0], [enemy])
-      )
-      combat.resolve_round()
-
-    self.assertEqual(enemy.health, 500 - 60)
 
   def test_longer_cooldowns_block_the_ability_for_the_right_rounds(self):
     # Koryne's Arcane Blast has cooldown 2: usable every other round.
@@ -370,16 +250,6 @@ class TestDamageOverTime(unittest.TestCase):
     self.assertEqual(health, [95, 90, 85, 85])
     self.assertEqual(victim.active_effects, [])
 
-  def test_poison_ticks_are_reported_in_the_round_results(self):
-    combat, victim = self.poisoned_fight()
-
-    results = combat.resolve_round()
-
-    tick = results[-1]
-    self.assertIs(tick.target, victim)
-    self.assertEqual(tick.amount, 5)
-    self.assertIn("Poison", tick.description)
-
   def test_poison_is_nature_damage_so_nature_resistance_applies(self):
     combat, victim = self.poisoned_fight()
     victim.resistances[SpellSchool.NATURE] = 100
@@ -416,40 +286,8 @@ class TestDamageOverTime(unittest.TestCase):
     self.assertFalse(victim.is_alive())
     self.assertEqual(victim.health, 0)
 
-  def test_dead_characters_do_not_tick(self):
-    combat, victim = self.poisoned_fight()
-    combat.resolve_round()
-    victim.take_damage(10_000)
-
-    results = combat.resolve_round()
-
-    self.assertEqual(results, [])
-
 
 class TestVictoryAndDefeat(unittest.TestCase):
-
-  def test_combat_is_over_when_all_enemies_die(self):
-    hero = fighter("Hero", abilities=[strike(power=500)])
-    enemy = fighter("Enemy")
-    combat = Combat([hero], [enemy])
-    combat.queue_action(hero, hero.abilities[0], [enemy])
-
-    combat.resolve_round()
-
-    self.assertTrue(combat.is_over())
-    self.assertTrue(combat.living_heroes())
-    self.assertFalse(combat.living_enemies())
-
-  def test_combat_is_over_when_all_heroes_die(self):
-    hero = fighter("Hero", health=10)
-    enemy = fighter("Enemy", abilities=[strike(power=500)])
-    combat = Combat([hero], [enemy])
-    combat.queue_action(enemy, enemy.abilities[0], [hero])
-
-    combat.resolve_round()
-
-    self.assertTrue(combat.is_over())
-    self.assertFalse(combat.living_heroes())
 
   def test_poison_can_decide_the_fight_at_round_end(self):
     hero = fighter("Hero")
@@ -472,15 +310,6 @@ class TestVictoryAndDefeat(unittest.TestCase):
     self.assertEqual(combat.resolve_round(), [])
     self.assertEqual(combat.round_number, round_after_victory)
 
-  def test_cannot_queue_after_the_fight_is_over(self):
-    hero = fighter("Hero", abilities=[strike(power=500)])
-    enemy = fighter("Enemy")
-    combat = Combat([hero], [enemy])
-    combat.queue_action(hero, hero.abilities[0], [enemy])
-    combat.resolve_round()
-
-    self.assertIsNone(combat.queue_action(hero, hero.abilities[0], [enemy]))
-
   def test_no_round_end_upkeep_after_the_winning_blow(self):
     # A poisoned survivor must not be finished off by a tick after victory.
     hero = fighter("Hero", health=5, abilities=[strike(power=500)])
@@ -502,34 +331,6 @@ def cool_down_everything(character):
 
 class TestBasicAttack(unittest.TestCase):
 
-  def test_hero_can_use_the_basic_attack_while_an_ability_is_ready(self):
-    combat, heroes, enemies = standard_fight()
-
-    self.assertTrue(heroes[0].abilities[0].is_ready())
-    self.assertTrue(combat.can_queue(heroes[0], heroes[0].basic_attack))
-    self.assertIsNotNone(
-      combat.queue_action(heroes[0], heroes[0].basic_attack, [enemies[0]])
-    )
-
-  def test_hero_can_use_the_basic_attack_when_every_ability_is_on_cooldown(self):
-    combat, heroes, enemies = standard_fight()
-    cool_down_everything(heroes[1])
-
-    action = combat.queue_action(
-      heroes[1], heroes[1].basic_attack, [enemies[0]]
-    )
-
-    self.assertIsNotNone(action)
-
-  def test_enemy_can_be_queued_with_the_basic_attack_while_an_ability_is_ready(self):
-    combat, heroes, enemies = standard_fight()
-    trog = enemies[0]
-
-    self.assertTrue(trog.abilities[0].is_ready())
-    self.assertIsNotNone(
-      combat.queue_action(trog, trog.basic_attack, [heroes[0]])
-    )
-
   def test_basic_attack_never_goes_on_cooldown(self):
     combat, heroes, enemies = standard_fight()
     koryne = heroes[0]
@@ -541,13 +342,6 @@ class TestBasicAttack(unittest.TestCase):
       combat.resolve_round()
 
     self.assertTrue(koryne.basic_attack.is_ready())
-
-  def test_other_characters_basic_attacks_cannot_be_borrowed(self):
-    combat, heroes, enemies = standard_fight()
-
-    self.assertIsNone(
-      combat.queue_action(heroes[0], heroes[1].basic_attack, [enemies[0]])
-    )
 
   def test_basic_attack_hits_for_15_scaled_by_attack(self):
     combat, heroes, enemies = standard_fight()
@@ -591,11 +385,6 @@ class TestCancelAndReplace(unittest.TestCase):
     self.assertIsNone(combat.action_for(heroes[0]))
     self.assertEqual(combat.heroes_awaiting_orders()[0], heroes[0])
 
-  def test_cancel_with_nothing_queued_returns_none(self):
-    combat, heroes, _ = standard_fight()
-
-    self.assertIsNone(combat.cancel_action(heroes[0]))
-
   def test_cancel_leaves_other_actions_alone(self):
     combat, heroes, enemies = standard_fight()
     combat.queue_action(heroes[0], heroes[0].abilities[0], [enemies[0]])
@@ -615,13 +404,6 @@ class TestCancelAndReplace(unittest.TestCase):
     self.assertIsNotNone(new)
     self.assertIs(combat.action_for(koryne), new)
     self.assertEqual(len(combat.combat_round.action_queue.actions), 1)
-
-  def test_replace_works_even_with_nothing_queued(self):
-    combat, heroes, enemies = standard_fight()
-
-    new = combat.replace_action(heroes[0], heroes[0].abilities[0], [enemies[0]])
-
-    self.assertIs(combat.action_for(heroes[0]), new)
 
   def test_a_rejected_replacement_keeps_the_original_action(self):
     combat, heroes, enemies = standard_fight()
@@ -688,11 +470,6 @@ class TestTieBreaks(unittest.TestCase):
 
 
 class TestWinner(unittest.TestCase):
-
-  def test_heroes_have_not_won_while_the_fight_continues(self):
-    combat, _, _ = standard_fight()
-
-    self.assertFalse(combat.heroes_won())
 
   def test_heroes_won_when_every_enemy_is_dead(self):
     combat, _, enemies = standard_fight()

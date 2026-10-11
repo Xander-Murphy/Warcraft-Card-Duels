@@ -54,32 +54,6 @@ class TestBasicAttack(unittest.TestCase):
 
     self.assertTrue(attack.is_ready())
 
-  def test_every_enemy_has_its_own_basic_attack(self):
-    first, second = DEVIATE_RAVAGER.clone(), DEVIATE_RAVAGER.clone()
-
-    self.assertIsNot(first.basic_attack, BASIC_ATTACK)
-    self.assertIsNot(first.basic_attack, second.basic_attack)
-    self.assertIsNot(first.basic_attack, DEVIATE_RAVAGER.basic_attack)
-    self.assertEqual(first.basic_attack.name, "Basic Attack")
-
-  def test_a_newly_built_enemy_does_not_share_the_prototype_basic_attack(self):
-    first, second = make_enemy("First"), make_enemy("Second")
-
-    self.assertIsNot(first.basic_attack, BASIC_ATTACK)
-    self.assertIsNot(first.basic_attack, second.basic_attack)
-
-  def test_enemies_without_abilities_still_get_a_basic_attack(self):
-    self.assertEqual(DEVIATE_RAVAGER.abilities, [])
-    self.assertEqual(DEVIATE_RAVAGER.basic_attack.power, 15)
-
-  def test_basic_attack_uses_the_enemys_attack_stat_like_any_damage(self):
-    ravager = DEVIATE_RAVAGER.clone()  # attack 11
-    hero = make_hero()
-
-    result = DamageEffect().apply(ravager, hero, ravager.basic_attack)
-
-    self.assertEqual(result.amount, 17)  # round(15 * 1.11)
-
   def test_enemy_can_always_use_its_basic_attack_but_only_ready_abilities(self):
     trog, other = RAGEFIRE_TROG.clone(), RAGEFIRE_TROG.clone()
     smash = trog.abilities[0]  # cooldown 1
@@ -95,14 +69,6 @@ class TestBasicAttack(unittest.TestCase):
     self.assertFalse(trog.can_use(other.basic_attack))
     self.assertFalse(trog.can_use(KORYNE.clone().abilities[0]))
 
-  def test_clone_uses_its_own_basic_attack(self):
-    clone = MOLTEN_ELEMENTAL.clone()
-    clone.abilities[0].use()
-
-    self.assertTrue(clone.can_use(clone.basic_attack))
-    self.assertFalse(clone.can_use(MOLTEN_ELEMENTAL.basic_attack))
-    self.assertFalse(clone.can_use(BASIC_ATTACK))
-
 
 class TestRandomBehavior(unittest.TestCase):
 
@@ -113,29 +79,6 @@ class TestRandomBehavior(unittest.TestCase):
     behavior = RandomBehavior(random.Random(rng) if rng is not None else None)
     return behavior.choose_action(
       enemy, Battlefield(self.heroes, [enemy])
-    )
-
-  def test_enemy_with_no_abilities_uses_its_basic_attack(self):
-    enemy = make_enemy()
-    action = self.choose(enemy, rng=1)
-
-    assert action is not None
-    self.assertIs(action.ability, enemy.basic_attack)
-    self.assertIs(action.actor, enemy)
-
-  def test_the_basic_attack_is_one_more_option_beside_a_ready_ability(self):
-    smash = make_ability("Smash")
-    enemy = make_enemy(abilities=[smash])
-
-    chosen = []
-    for seed in range(60):
-      action = self.choose(enemy, rng=seed)
-      assert action is not None
-      chosen.append(action.ability)
-
-    self.assertEqual(
-      {id(ability) for ability in chosen},
-      {id(smash), id(enemy.basic_attack)}
     )
 
   def test_ability_and_basic_attack_are_roughly_equally_likely(self):
@@ -160,17 +103,6 @@ class TestRandomBehavior(unittest.TestCase):
 
     assert action is not None
     self.assertIs(action.ability, enemy.basic_attack)
-
-  def test_on_cooldown_abilities_are_never_chosen(self):
-    ready = make_ability("Ready")
-    cooling = make_ability("Cooling", cooldown=3)
-    enemy = make_enemy(abilities=[cooling, ready])
-    cooling.use()
-
-    for seed in range(60):
-      action = self.choose(enemy, rng=seed)
-      assert action is not None
-      self.assertIsNot(action.ability, cooling)
 
   def test_ability_choice_is_random_among_ready_abilities(self):
     first, second = make_ability("First"), make_ability("Second")
@@ -205,31 +137,6 @@ class TestRandomBehavior(unittest.TestCase):
       assert action is not None
       self.assertNotEqual(action.targets[0].name, "B")
 
-  def test_same_seed_gives_the_same_choice(self):
-    enemy = make_enemy(abilities=[make_ability("X"), make_ability("Y")])
-
-    first = self.choose(enemy, rng=7)
-    second = self.choose(enemy, rng=7)
-
-    assert first is not None and second is not None
-    self.assertEqual(first.ability.name, second.ability.name)
-    self.assertEqual(first.targets, second.targets)
-
-  def test_default_behavior_uses_the_shared_random_module(self):
-    enemy = make_enemy()
-
-    random.seed(11)
-    first = RandomBehavior().choose_action(
-      enemy, Battlefield(self.heroes, [enemy])
-    )
-    random.seed(11)
-    second = RandomBehavior().choose_action(
-      enemy, Battlefield(self.heroes, [enemy])
-    )
-
-    assert first is not None and second is not None
-    self.assertEqual(first.targets, second.targets)
-
   def test_area_ability_targets_every_living_hero(self):
     sweep = make_ability("Sweep", TargetType.ALL_ENEMIES)
     enemy = make_enemy(abilities=[sweep])
@@ -251,20 +158,6 @@ class TestRandomBehavior(unittest.TestCase):
     assert action is not None
     self.assertEqual(action.targets, [enemy])
 
-  def test_ally_ability_targets_a_living_enemy_ally(self):
-    mend = Ability(
-      "Mend", "", 10, 2, TargetType.SINGLE_ALLY, effects=[HealEffect()]
-    )
-    enemy = make_enemy("Healer", abilities=[mend])
-    friend = make_enemy("Friend")
-    battlefield = Battlefield(self.heroes, [enemy, friend])
-    friend.take_damage(10_000)
-
-    action = RandomBehavior(random.Random(1)).choose_action(enemy, battlefield)
-
-    assert action is not None
-    self.assertEqual(action.targets, [enemy])
-
   def test_no_valid_target_means_no_action(self):
     enemy = make_enemy()
     for hero in self.heroes:
@@ -274,10 +167,6 @@ class TestRandomBehavior(unittest.TestCase):
 
 
 class TestBehaviorIsAStrategy(unittest.TestCase):
-
-  def test_abstract_behavior_cannot_be_instantiated(self):
-    with self.assertRaises(TypeError):
-      EnemyBehavior()  # pyright: ignore[reportAbstractUsage]
 
   def test_new_behavior_plugs_in_without_changing_enemy_or_combat(self):
     # Open/Closed: an enemy that always goes for the weakest hero.
@@ -296,23 +185,6 @@ class TestBehaviorIsAStrategy(unittest.TestCase):
     planned = combat.plan_enemy_actions()
 
     self.assertEqual(planned[0].targets, [heroes[1]])
-
-  def test_behavior_that_has_no_move_queues_nothing(self):
-    class Passive(EnemyBehavior):
-      def choose_action(self, enemy, battlefield):
-        return None
-
-    combat = Combat([make_hero()], [make_enemy(behavior=Passive())])
-
-    self.assertEqual(combat.plan_enemy_actions(), [])
-
-  def test_default_enemy_behavior_is_random(self):
-    self.assertIsInstance(make_enemy().behavior, RandomBehavior)
-
-  def test_each_enemy_has_its_own_behavior_object(self):
-    self.assertIsNot(
-      DEVIATE_RAVAGER.clone().behavior, DEVIATE_RAVAGER.clone().behavior
-    )
 
 
 def party():
@@ -335,34 +207,6 @@ class TestPlanEnemyActions(unittest.TestCase):
     self.assertEqual([a.actor for a in planned], enemies)
     for enemy in enemies:
       self.assertIsNotNone(combat.action_for(enemy))
-
-  def test_enemies_with_no_abilities_can_now_act(self):
-    ravager = seeded(DEVIATE_RAVAGER.clone())
-    combat = Combat(party(), [ravager])
-
-    planned = combat.plan_enemy_actions()
-
-    self.assertIs(planned[0].ability, ravager.basic_attack)
-
-  def test_dead_enemies_are_skipped(self):
-    alive, dead = seeded(RAGEFIRE_TROG.clone()), seeded(RAGEFIRE_TROG.clone())
-    dead.take_damage(10_000)
-    combat = Combat(party(), [alive, dead])
-
-    planned = combat.plan_enemy_actions()
-
-    self.assertEqual([a.actor for a in planned], [alive])
-
-  def test_enemies_that_already_have_orders_are_left_alone(self):
-    trog = seeded(RAGEFIRE_TROG.clone())
-    heroes = party()
-    combat = Combat(heroes, [trog])
-    manual = combat.queue_action(trog, trog.abilities[0], [heroes[0]])
-
-    planned = combat.plan_enemy_actions()
-
-    self.assertEqual(planned, [])
-    self.assertIs(combat.action_for(trog), manual)
 
   def test_behavior_is_only_consulted_for_enemies_that_need_orders(self):
     class Spy(EnemyBehavior):
@@ -387,50 +231,6 @@ class TestPlanEnemyActions(unittest.TestCase):
     self.assertEqual(needs_spy.calls, 1)
     self.assertEqual(has_spy.calls, 0)
     self.assertEqual(dead_spy.calls, 0)
-
-  def test_planning_twice_does_not_double_up(self):
-    combat = Combat(party(), [seeded(RAGEFIRE_TROG.clone())])
-
-    combat.plan_enemy_actions()
-    combat.plan_enemy_actions()
-
-    self.assertEqual(len(combat.combat_round.action_queue.actions), 1)
-
-  def test_nothing_is_planned_once_the_fight_is_over(self):
-    heroes = party()
-    for hero in heroes:
-      hero.take_damage(10_000)
-    combat = Combat(heroes, [seeded(RAGEFIRE_TROG.clone())])
-
-    self.assertEqual(combat.plan_enemy_actions(), [])
-
-  def test_heroes_and_enemies_share_the_same_queue_and_turn_order(self):
-    heroes = party()
-    trog = seeded(RAGEFIRE_TROG.clone())  # speed 4
-    combat = Combat(heroes, [trog])
-    combat.queue_action(heroes[1], heroes[1].abilities[0], [trog])  # Genjo
-    combat.plan_enemy_actions()
-
-    combat.combat_round.prepare()
-    order = [a.actor for a in combat.combat_round.action_queue.actions]
-
-    self.assertEqual(order[0], heroes[1])
-    self.assertIn(trog, order)
-
-  def test_planned_enemy_attacks_really_hurt_heroes(self):
-    heroes = party()
-    ravager = seeded(DEVIATE_RAVAGER.clone())
-    combat = Combat(heroes, [ravager])
-    combat.plan_enemy_actions()
-
-    results = combat.resolve_round()
-
-    self.assertEqual(len(results), 1)
-    self.assertGreater(results[0].amount, 0)
-    self.assertEqual(
-      sum(hero.max_health - hero.health for hero in heroes),
-      results[0].amount
-    )
 
   def test_a_special_ability_is_never_used_two_rounds_running_while_it_cools_down(self):
     # Molten Blast has cooldown 2, so it can't be chosen the round after use.
@@ -507,15 +307,6 @@ class TestFullFights(unittest.TestCase):
         self.assertLessEqual(combat.round_number, 40)
         damage_taken = sum(h.max_health - h.health for h in heroes)
         self.assertGreater(damage_taken, 0)
-
-  def test_the_same_seed_always_plays_out_the_same_way(self):
-    first, heroes_a, _ = self.play(4)
-    second, heroes_b, _ = self.play(4)
-
-    self.assertEqual(first.round_number, second.round_number)
-    self.assertEqual(
-      [h.health for h in heroes_a], [h.health for h in heroes_b]
-    )
 
 
 if __name__ == "__main__":

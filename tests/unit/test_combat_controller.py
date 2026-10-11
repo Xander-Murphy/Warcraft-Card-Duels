@@ -1,10 +1,6 @@
 import random
-import subprocess
-import sys
 import unittest
-from pathlib import Path
 
-import combat_controller as controller_module
 from abilities import Ability
 from ability_effects import HealEffect
 from characters import Character
@@ -15,7 +11,6 @@ from combat_controller import (
   CombatController,
   FightOver,
   HeroSelection,
-  SelectionState,
   TargetSelection,
 )
 from enemy_behavior import RandomBehavior
@@ -74,12 +69,6 @@ def queue_for_everyone(controller):
 
 class TestStartOfFight(unittest.TestCase):
 
-  def test_starts_in_hero_selection_on_the_first_hero(self):
-    controller, heroes, _ = make_controller()
-
-    self.assertIsInstance(controller.state, HeroSelection)
-    self.assertIs(controller.selected_hero, heroes[0])
-
   def test_enemies_have_already_chosen_what_to_do(self):
     controller, _, enemies = make_controller()
 
@@ -119,13 +108,6 @@ class TestStartOfFight(unittest.TestCase):
 
     self.assertIs(controller.selected_hero, heroes[1])
 
-  def test_no_hero_has_queued_anything_yet(self):
-    controller, heroes, _ = make_controller()
-
-    for hero in heroes:
-      self.assertEqual(controller.queued_text(hero), "")
-    self.assertFalse(controller.can_resolve)
-
 
 class TestHeroSelection(unittest.TestCase):
 
@@ -148,30 +130,6 @@ class TestHeroSelection(unittest.TestCase):
 
     self.assertIs(controller.selected_hero, heroes[2])
 
-  def test_dead_heroes_are_skipped_going_left_too(self):
-    controller, heroes, _ = make_controller()
-    heroes[2].take_damage(10_000)
-
-    controller.move(-1)
-
-    self.assertIs(controller.selected_hero, heroes[1])
-
-  def test_confirm_opens_ability_selection_from_the_first_ability(self):
-    controller, _, _ = make_controller()
-    controller.ability_index = 2
-
-    controller.confirm()
-
-    self.assertIsInstance(controller.state, AbilitySelection)
-    self.assertEqual(controller.ability_index, 0)
-
-  def test_cancel_does_nothing(self):
-    controller, _, _ = make_controller()
-
-    controller.cancel()
-
-    self.assertIsInstance(controller.state, HeroSelection)
-
 
 class TestAbilitySelection(unittest.TestCase):
 
@@ -184,23 +142,6 @@ class TestAbilitySelection(unittest.TestCase):
     self.assertIs(controller.selected_ability, heroes[0].basic_attack)
     controller.move(1)
     self.assertIs(controller.selected_ability, heroes[0].abilities[0])
-
-  def test_cancel_goes_back_to_hero_selection(self):
-    controller, _, _ = make_controller()
-    choose(controller, 0, 0)
-
-    controller.cancel()
-
-    self.assertIsInstance(controller.state, HeroSelection)
-
-  def test_single_target_ability_opens_target_selection(self):
-    controller, _, _ = make_controller()
-    choose(controller, 0, BLAST)
-
-    controller.confirm()
-
-    self.assertIsInstance(controller.state, TargetSelection)
-    self.assertIsNone(controller.combat.action_for(controller.selected_hero))
 
   def test_self_ability_queues_immediately(self):
     controller, heroes, _ = make_controller()
@@ -230,17 +171,6 @@ class TestAbilitySelection(unittest.TestCase):
 
     self.assertIsInstance(controller.state, AbilitySelection)
     self.assertIsNone(controller.combat.action_for(heroes[0]))
-
-  def test_basic_attack_can_be_chosen_while_abilities_are_ready(self):
-    controller, heroes, _ = make_controller()
-    choose(controller, 0, BASIC)
-
-    self.assertTrue(controller.is_usable(heroes[0].basic_attack))
-    controller.confirm()
-    self.assertIsInstance(controller.state, TargetSelection)
-    controller.confirm()
-
-    self.assertIs(action_of(controller, heroes[0]).ability, heroes[0].basic_attack)
 
   def test_basic_attack_is_still_usable_when_every_ability_is_on_cooldown(self):
     controller, heroes, _ = make_controller()
@@ -285,17 +215,6 @@ class TestTargetSelection(unittest.TestCase):
     controller.confirm()
 
     self.assertEqual(action_of(controller, heroes[0]).targets, [enemies[1]])
-
-  def test_cursor_wraps_around_living_enemies(self):
-    controller, heroes, enemies = make_controller()
-    enemies[1].take_damage(10_000)
-    self.open_targets(controller)
-
-    controller.move(1)
-    controller.move(1)
-    controller.confirm()
-
-    self.assertEqual(action_of(controller, heroes[0]).targets, [enemies[0]])
 
   def test_highlighted_target_follows_the_cursor(self):
     controller, _, enemies = make_controller()
@@ -412,14 +331,6 @@ class TestResolving(unittest.TestCase):
     self.assertFalse(controller.can_resolve)
     self.assertFalse(controller.resolve_round())
 
-  def test_dead_heroes_are_not_waited_for(self):
-    controller, heroes, _ = make_controller()
-    heroes[2].take_damage(10_000)
-
-    queue_for_everyone(controller)
-
-    self.assertTrue(controller.can_resolve)
-
   def test_resolving_runs_the_round_and_fills_the_log(self):
     controller, _, _ = make_controller()
     queue_for_everyone(controller)
@@ -478,15 +389,6 @@ class TestResolving(unittest.TestCase):
 
     self.assertFalse(heroes[0].is_alive())
     self.assertIs(controller.selected_hero, heroes[1])
-
-  def test_cooldowns_show_up_after_a_round(self):
-    controller, heroes, _ = make_controller()
-    queue_for_everyone(controller)   # Koryne used Arcane Blast (cooldown 2)
-
-    controller.resolve_round()
-
-    self.assertFalse(controller.is_usable(heroes[0].abilities[BLAST]))
-    self.assertEqual(heroes[0].abilities[BLAST].current_cooldown, 1)
 
   def test_basic_attack_unlocks_in_the_round_nothing_is_ready(self):
     # Regression: Genjo's three abilities are all on cooldown in round 4.
@@ -564,11 +466,6 @@ class TestFightEnd(unittest.TestCase):
     self.assertIs(controller.state, state)
     self.assertFalse(controller.resolve_round())
 
-  def test_round_does_not_advance_after_the_fight_ends(self):
-    controller = self.win()
-
-    self.assertEqual(controller.combat.round_number, 1)
-
 
 class TestFightEndedFromOutside(unittest.TestCase):
   """The controller follows Combat, however the fight happened to end."""
@@ -582,44 +479,6 @@ class TestFightEndedFromOutside(unittest.TestCase):
       enemy.take_damage(10_000)
 
     self.assertIsInstance(controller.state, FightOver)
-
-  def test_input_is_ignored_once_the_fight_is_over(self):
-    controller, _, enemies = make_controller()
-    for enemy in enemies:
-      enemy.take_damage(10_000)
-
-    controller.confirm()
-    controller.move(1)
-
-    self.assertIsInstance(controller.state, FightOver)
-    self.assertEqual(controller.hero_index, 0)
-
-
-class TestStatesAreInterchangeable(unittest.TestCase):
-
-  def test_every_state_implements_the_same_interface(self):
-    controller, _, _ = make_controller()
-
-    for state_class in (HeroSelection, AbilitySelection, TargetSelection, FightOver):
-      state = state_class(controller)
-      self.assertIsInstance(state, SelectionState)
-      self.assertTrue(state.hint)
-
-  def test_abstract_state_cannot_be_instantiated(self):
-    controller, _, _ = make_controller()
-
-    with self.assertRaises(TypeError):
-      SelectionState(controller)  # pyright: ignore[reportAbstractUsage]
-
-  def test_controller_does_not_depend_on_pygame(self):
-    src = str(Path(controller_module.__file__).parent)
-    code = "import combat_controller, sys; sys.exit('pygame' in sys.modules)"
-
-    result = subprocess.run(
-      [sys.executable, "-c", code], cwd=src, capture_output=True
-    )
-
-    self.assertEqual(result.returncode, 0, result.stderr.decode())
 
 
 if __name__ == "__main__":

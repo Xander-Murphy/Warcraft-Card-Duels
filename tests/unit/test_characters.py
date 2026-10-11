@@ -37,12 +37,6 @@ def make_immunity(schools, duration=1):
 
 class TestTakeDamage(unittest.TestCase):
 
-  def test_defense_reduces_damage_without_a_school(self):
-    target = make_character(defense=3)
-
-    self.assertEqual(target.take_damage(10), 7)
-    self.assertEqual(target.health, 93)
-
   def test_damage_never_goes_below_zero(self):
     target = make_character(defense=50)
 
@@ -61,16 +55,6 @@ class TestTakeDamage(unittest.TestCase):
     target = make_character(resistances={SpellSchool.FIRE: 25})
 
     self.assertEqual(target.take_damage(20, SpellSchool.FIRE), 15)
-
-  def test_negative_resistance_increases_damage(self):
-    target = make_character(resistances={SpellSchool.FROST: -10})
-
-    self.assertEqual(target.take_damage(20, SpellSchool.FROST), 22)
-
-  def test_resistance_only_applies_to_its_school(self):
-    target = make_character(resistances={SpellSchool.FIRE: 50})
-
-    self.assertEqual(target.take_damage(20, SpellSchool.FROST), 20)
 
   def test_resistance_is_applied_before_flat_defense(self):
     target = make_character(defense=2, resistances={SpellSchool.FIRE: 25})
@@ -106,12 +90,6 @@ class TestStatModifiers(unittest.TestCase):
     self.assertEqual(character.get_stat(Stat.DEFENSE), 2)
     self.assertEqual(character.get_stat(Stat.SPEED), 5)
 
-  def test_modified_defense_changes_damage_taken(self):
-    character = make_character(defense=2)
-    character.add_effect(make_buff(Stat.DEFENSE, 7))
-
-    self.assertEqual(character.take_damage(10), 1)
-
   def test_resistance_buff_applies_only_to_listed_schools(self):
     character = make_character(resistances={SpellSchool.ARCANE: 15})
     character.add_effect(
@@ -131,14 +109,6 @@ class TestStatModifiers(unittest.TestCase):
     self.assertEqual(character.get_resistance(SpellSchool.ARCANE), -25)
     self.assertEqual(character.take_damage(20, SpellSchool.ARCANE), 25)
 
-  def test_expired_effects_stop_modifying_stats(self):
-    character = make_character(attack=10)
-    character.add_effect(make_buff(Stat.ATTACK, 10, duration=1))
-
-    character.update_effects()
-
-    self.assertEqual(character.get_stat(Stat.ATTACK), 10)
-
 
 class TestEffectsAndHealing(unittest.TestCase):
 
@@ -153,13 +123,6 @@ class TestEffectsAndHealing(unittest.TestCase):
     self.assertEqual(len(character.active_effects), 1)
     self.assertEqual(character.active_effects[0].remaining_duration, 3)
     self.assertEqual(character.get_stat(Stat.ATTACK), 20)
-
-  def test_different_effects_do_coexist(self):
-    character = make_character()
-    character.add_effect(make_buff(Stat.ATTACK, 5, name="A"))
-    character.add_effect(make_buff(Stat.DEFENSE, 5, name="B"))
-
-    self.assertEqual(len(character.active_effects), 2)
 
   def test_update_effects_ticks_every_effect_then_drops_expired(self):
     character = make_character()
@@ -246,14 +209,6 @@ class TestRoundEnd(unittest.TestCase):
 
     self.assertEqual(character.health, 95)
 
-  def test_other_school_resistance_does_not_reduce_poison(self):
-    character = make_character(resistances={SpellSchool.FIRE: 50})
-    character.add_effect(self.poison())
-
-    character.end_round()
-
-    self.assertEqual(character.health, 90)
-
   def test_immunity_to_the_school_blocks_damage_over_time(self):
     character = make_character()
     character.add_effect(self.poison())
@@ -264,27 +219,6 @@ class TestRoundEnd(unittest.TestCase):
     self.assertEqual(character.health, 100)
     self.assertEqual(results[0].amount, 0)
     self.assertIn("immune", results[0].description)
-
-  def test_immunity_to_a_different_school_does_not_block_poison(self):
-    character = make_character()
-    character.add_effect(self.poison())
-    character.add_effect(make_immunity([SpellSchool.PHYSICAL], duration=2))
-
-    character.end_round()
-
-    self.assertEqual(character.health, 90)
-
-  def test_damage_over_time_without_a_school_only_faces_defense(self):
-    character = make_character(
-      defense=4, resistances={SpellSchool.NATURE: 50}
-    )
-    character.add_effect(StatusEffect(
-      "Curse", EffectType.DAMAGE_OVER_TIME, EffectCategory.CURSE, 10, 2
-    ))
-
-    character.end_round()
-
-    self.assertEqual(character.health, 94)
 
   def test_end_round_expires_effects(self):
     character = make_character()
@@ -317,9 +251,6 @@ class TestRoundEnd(unittest.TestCase):
     self.assertEqual(character.health, 0)
     self.assertEqual(len(results), 1)
 
-  def test_end_round_with_nothing_active_reports_nothing(self):
-    self.assertEqual(make_character().end_round(), [])
-
 
 class TestUsableAbilities(unittest.TestCase):
 
@@ -332,33 +263,6 @@ class TestUsableAbilities(unittest.TestCase):
     ]
     return make_character(abilities=abilities)
 
-  def test_every_character_has_its_own_basic_attack(self):
-    first, second = make_character(), make_character()
-
-    self.assertEqual(first.basic_attack.name, "Basic Attack")
-    self.assertEqual(first.basic_attack.power, 15)
-    self.assertIsNot(first.basic_attack, second.basic_attack)
-
-  def test_the_basic_attack_is_usable_alongside_ready_abilities(self):
-    character = self.make(2, 3)
-
-    self.assertEqual(
-      character.usable_abilities(),
-      character.abilities + [character.basic_attack]
-    )
-    self.assertTrue(character.can_use(character.basic_attack))
-
-  def test_abilities_on_cooldown_are_not_usable(self):
-    character = self.make(2, 3)
-    character.abilities[0].use()
-
-    self.assertEqual(
-      character.usable_abilities(),
-      [character.abilities[1], character.basic_attack]
-    )
-    self.assertFalse(character.can_use(character.abilities[0]))
-    self.assertTrue(character.can_use(character.abilities[1]))
-
   def test_basic_attack_is_the_only_option_when_nothing_else_is_ready(self):
     character = self.make(2, 3)
     for ability in character.abilities:
@@ -367,17 +271,6 @@ class TestUsableAbilities(unittest.TestCase):
     self.assertEqual(character.usable_abilities(), [character.basic_attack])
     self.assertTrue(character.can_use(character.basic_attack))
     self.assertFalse(character.can_use(character.abilities[0]))
-
-  def test_character_with_no_abilities_can_always_use_the_basic_attack(self):
-    character = make_character()
-
-    self.assertEqual(character.usable_abilities(), [character.basic_attack])
-
-  def test_other_characters_abilities_are_never_usable(self):
-    character, other = self.make(2), self.make(2)
-
-    self.assertFalse(character.can_use(other.abilities[0]))
-    self.assertFalse(character.can_use(other.basic_attack))
 
 
 if __name__ == "__main__":

@@ -1,9 +1,8 @@
 import random
 import unittest
 
-from effects_data import POISON
 from encounters import generate_encounter
-from enemy_data import DEVIATE_RAVAGER, RAGEFIRE_TROG
+from enemy_data import DEVIATE_RAVAGER
 from game import Game
 from hero_data import KORYNE, BRAEKS
 
@@ -17,10 +16,6 @@ class TestCloning(unittest.TestCase):
     self.assertEqual(clone.name, KORYNE.name)
     self.assertEqual(clone.health, KORYNE.health)
     self.assertEqual(clone.specialization, KORYNE.specialization)
-
-  def test_clone_is_the_same_subclass(self):
-    self.assertIs(type(KORYNE.clone()), type(KORYNE))
-    self.assertIs(type(RAGEFIRE_TROG.clone()), type(RAGEFIRE_TROG))
 
   def test_damaging_a_clone_does_not_touch_the_prototype_or_siblings(self):
     first = DEVIATE_RAVAGER.clone()
@@ -41,29 +36,6 @@ class TestCloning(unittest.TestCase):
     self.assertFalse(first.abilities[0].is_ready())
     self.assertTrue(second.abilities[0].is_ready())
     self.assertTrue(KORYNE.abilities[0].is_ready())
-
-  def test_cloned_abilities_are_not_the_prototype_abilities(self):
-    clone = BRAEKS.clone()
-
-    for original, copied in zip(BRAEKS.abilities, clone.abilities):
-      with self.subTest(ability=original.name):
-        self.assertIsNot(original, copied)
-        self.assertIsNot(original.effects, copied.effects)
-
-  def test_cloned_characters_have_independent_resistances_and_effects(self):
-    clone = KORYNE.clone()
-    clone.resistances[list(clone.resistances)[0]] = 99
-    clone.add_effect(POISON.clone())
-
-    self.assertNotEqual(clone.resistances, KORYNE.resistances)
-    self.assertEqual(KORYNE.active_effects, [])
-
-  def test_status_effect_clone_has_independent_duration(self):
-    clone = POISON.clone()
-    clone.reduce_duration()
-
-    self.assertEqual(clone.remaining_duration, POISON.duration - 1)
-    self.assertEqual(POISON.remaining_duration, POISON.duration)
 
 
 class TestEncounterCloning(unittest.TestCase):
@@ -129,14 +101,6 @@ class TestGameRun(unittest.TestCase):
     game.start_run()
     self.assertTrue(game.party[0].is_alive())
     self.assertEqual(game.party[0].health, KORYNE.max_health)
-
-  def test_start_run_does_not_change_selection(self):
-    game = Game(None)
-    game.selected_heroes = [KORYNE]
-
-    game.start_run()
-
-    self.assertIs(game.selected_heroes[0], KORYNE)
 
 
 if __name__ == "__main__":

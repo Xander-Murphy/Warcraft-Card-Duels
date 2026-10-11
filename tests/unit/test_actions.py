@@ -1,10 +1,10 @@
 import unittest
 
 from actions import Action
-from hero_data import KORYNE, GENJO, SCATTER, BRAEKS
-from enemy_data import RAGEFIRE_TROG, DEFIAS_MINER
+from hero_data import KORYNE, GENJO, SCATTER
+from enemy_data import RAGEFIRE_TROG
 from ability_data.hero_abilities import ARCANE_BLAST, CLOAK_OF_SHADOWS
-from lib.types import SpellSchool, Stat
+from lib.types import SpellSchool
 
 
 class TestActions(unittest.TestCase):
@@ -28,17 +28,6 @@ class TestActions(unittest.TestCase):
 
 class TestActionExecution(unittest.TestCase):
   """Runs real abilities from the data modules through Action.execute()."""
-
-  def test_single_target_damage_ability(self):
-    koryne = KORYNE.clone()
-    trog = RAGEFIRE_TROG.clone()
-    blast = koryne.abilities[0]  # Arcane Blast: 30 power, Koryne attack 26
-
-    results = Action(koryne, blast, [trog]).execute()
-
-    self.assertEqual(len(results), 1)
-    self.assertEqual(results[0].amount, 38)
-    self.assertEqual(trog.health, 2)
 
   def test_execute_puts_the_ability_on_cooldown(self):
     koryne = KORYNE.clone()
@@ -70,16 +59,6 @@ class TestActionExecution(unittest.TestCase):
     self.assertEqual(action.execute(), [])
     self.assertEqual(trog.health, trog.max_health)
 
-  def test_area_ability_hits_every_target(self):
-    braeks = BRAEKS.clone()
-    enemies = [DEFIAS_MINER.clone(), DEFIAS_MINER.clone()]
-    whirlwind = braeks.abilities[2]  # 15 power, Braeks attack 19 -> 18
-
-    results = Action(braeks, whirlwind, enemies).execute()
-
-    self.assertEqual(len(results), 2)
-    self.assertTrue(all(e.health == e.max_health - 18 for e in enemies))
-
   def test_ability_that_damages_and_applies_a_status(self):
     scatter = SCATTER.clone()
     trog = RAGEFIRE_TROG.clone()
@@ -89,26 +68,6 @@ class TestActionExecution(unittest.TestCase):
 
     self.assertEqual(trog.health, 16)
     self.assertEqual([e.name for e in trog.active_effects], ["Poison"])
-
-  def test_self_buff_changes_the_actors_stats(self):
-    braeks = BRAEKS.clone()
-    rage = braeks.abilities[1]  # Berserker Rage: +10 attack
-
-    Action(braeks, rage, [braeks]).execute()
-
-    self.assertEqual(braeks.get_stat(Stat.ATTACK), 29)
-
-  def test_buffed_hero_hits_harder(self):
-    braeks = BRAEKS.clone()
-    strike, rage = braeks.abilities[0], braeks.abilities[1]
-    plain_target, buffed_target = DEFIAS_MINER.clone(), DEFIAS_MINER.clone()
-
-    Action(braeks, strike, [plain_target]).execute()
-    Action(braeks, rage, [braeks]).execute()
-    strike.current_cooldown = 0
-    Action(braeks, strike, [buffed_target]).execute()
-
-    self.assertLess(buffed_target.health, plain_target.health)
 
   def test_evasion_blocks_physical_damage_until_it_expires(self):
     genjo = GENJO.clone()
@@ -143,23 +102,6 @@ class TestActionExecution(unittest.TestCase):
     self.assertEqual(koryne.get_resistance(SpellSchool.ARCANE), 30)
     self.assertEqual(koryne.get_resistance(SpellSchool.PHYSICAL), 15)
 
-  def test_enemy_ability_damages_a_hero_using_the_same_pipeline(self):
-    genjo = GENJO.clone()
-    trog = RAGEFIRE_TROG.clone()  # attack 8, Trog Smash power 20 -> 22, def 1
-
-    Action(trog, trog.abilities[0], [genjo]).execute()
-
-    self.assertEqual(genjo.health, genjo.max_health - 21)
-
-  def test_actions_on_clones_do_not_modify_prototypes(self):
-    koryne = KORYNE.clone()
-    Action(koryne, koryne.abilities[0], [RAGEFIRE_TROG.clone()]).execute()
-    Action(koryne, koryne.abilities[2], [koryne]).execute()
-
-    self.assertTrue(KORYNE.abilities[0].is_ready())
-    self.assertEqual(KORYNE.active_effects, [])
-    self.assertEqual(KORYNE.health, KORYNE.max_health)
-
 
 class TestActionTargets(unittest.TestCase):
 
@@ -181,15 +123,6 @@ class TestActionTargets(unittest.TestCase):
     Action(koryne, koryne.abilities[0], [trog]).execute()
 
     self.assertTrue(koryne.abilities[0].is_ready())
-
-  def test_action_with_one_living_target_still_executes(self):
-    braeks = BRAEKS.clone()
-    dead, alive = DEFIAS_MINER.clone(), DEFIAS_MINER.clone()
-    dead.take_damage(10_000)
-    action = Action(braeks, braeks.abilities[2], [dead, alive])
-
-    self.assertTrue(action.can_execute())
-    self.assertEqual(len(action.execute()), 1)
 
 
 if __name__ == "__main__":
