@@ -96,12 +96,12 @@ A Python/Pygame turn-based RPG where players build a team of three heroes and fi
 
 # 5. PESTEL Analysis
 
-- **Political:** Distribution platforms have publishing rules; commercial release means compliance
-- **Economic:** Highly competitive; success depends on visibility and retention; costs rise with scope
-- **Social:** Players expect variety and replayability; turn-based keeps a dedicated audience
-- **Technological:** Python/Pygame is accessible; runs without advanced graphics hardware
-- **Environmental:** Lightweight PC game has low direct impact
-- **Legal:** Must avoid copyrighted Warcraft assets; respect library licenses and IP
+- **Economic:** Crowded indie/RPG market; no marketing budget, so success depends on word of mouth and retention; budget is mostly development time
+- **Social:** Players want variety, depth, and visible progression (Mom Tests); turn-based RPGs keep a dedicated audience
+- **Technological:** Python/Pygame is accessible and runs on modest hardware; modular design eases expansion; no high-end graphics
+- **Legal:** Must avoid copyrighted Warcraft assets; respect library licenses; follow platform rules if sold commercially
+
+*Political and Environmental omitted: no material impact on a solo, lightweight PC game.*
 
 ---
 
@@ -159,9 +159,9 @@ A Python/Pygame turn-based RPG where players build a team of three heroes and fi
 # Business Model Canvas: Partners, Activities & Resources
 
 **Key Partners**
-- Pygame and open-source library maintainers
-- Distribution platforms (Steam, itch.io, GitHub)
-- Classmates and playtesters
+- Playtesters and Mom Test participants who give feedback during development
+- Classmates and instructor who review progress
+- Artists or audio creators, only if assets are commissioned or licensed
 
 **Key Activities**
 - Build the combat and encounter loop
@@ -209,6 +209,7 @@ A Python/Pygame turn-based RPG where players build a team of three heroes and fi
 - Regular updates with new heroes and dungeons
 
 **Channels**
+- Steam or itch.io (potential release platforms)
 - GitHub repository
 - Word of mouth
 - RPG communities and social media

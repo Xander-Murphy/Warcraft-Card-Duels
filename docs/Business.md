@@ -255,39 +255,31 @@ Turn-based RPGs continue to demonstrate strong interest, with recent releases su
 
 # 6. PESTEL Analysis
 
-## Political
-
-* Digital distribution platforms have established rules for publishing games.
-* Future commercial distribution would require compliance with platform policies.
+A full PESTEL review covers six factors, but only four meaningfully affect a small, single-player PC game built by one developer. Political and Environmental factors are excluded because they have no material impact on this project's scope, costs, or release.
 
 ## Economic
 
-* Game development is highly competitive.
-* Commercial success depends heavily on visibility and player retention.
-* Development costs can increase significantly when expanding graphics, content, and platforms.
+* The indie and RPG markets are crowded, so success depends on visibility and on giving players a reason to keep playing.
+* With no marketing budget, the project relies on word of mouth and community feedback rather than paid promotion.
+* The development budget is mostly time, so scope (heroes, art, content) must stay realistic.
 
 ## Social
 
-* Players increasingly expect varied characters and replayable experiences.
-* RPG communities value character customization, strategy, and progression.
-* Turn-based games continue to maintain a dedicated audience.
+* Mom Test respondents consistently wanted variety, strategic depth, and a clear sense of progression.
+* Turn-based RPGs maintain a dedicated audience, shown by the attention given to recent releases such as *Clair Obscur: Expedition 33*.
+* Players quickly abandon games with repetitive combat or slow progression, which makes retention a core design concern.
 
 ## Technological
 
-* Python and Pygame provide an accessible development environment.
-* PC hardware allows the game to run without requiring advanced graphics technology.
-* The modular architecture makes future features easier to implement.
-
-## Environmental
-
-* A small PC game has relatively low direct environmental impact compared with hardware-intensive games.
-* Keeping the game lightweight can reduce unnecessary hardware requirements.
+* Python and Pygame are accessible and allow the game to run without advanced graphics hardware.
+* The modular architecture makes adding heroes, abilities, and enemies straightforward.
+* Pygame is not designed for high-end graphics, so visuals will remain simple and the design focuses on gameplay.
 
 ## Legal
 
-* Any future commercial release must respect copyright and intellectual-property requirements.
-* The project must avoid using copyrighted Warcraft assets or content without appropriate rights.
+* The project must avoid copyrighted Warcraft assets, characters, and content, using original or properly licensed material instead.
 * Third-party libraries must be used according to their licenses.
+* A commercial release on a platform such as Steam would require following that platform's publishing rules.
 
 ---
 
@@ -409,7 +401,89 @@ Use the findings to determine whether changes should be made to:
 
 ---
 
-# 9. Feasibility Plan
+# 9. Business Model Canvas
+
+This canvas describes how Warcraft Card Duels creates, delivers, and captures value. Because this is an individual project, partners are limited to the people who directly contribute to development, and distribution platforms are treated as channels.
+
+## Key Partners
+
+* Playtesters and Mom Test participants who provide feedback during development
+* Classmates and the course instructor who review progress and give feedback
+* Artists or audio creators, only if assets are commissioned or licensed
+
+## Key Activities
+
+* Build the combat and encounter loop
+* Design, balance, and expand the hero roster
+* Add progression and reward features (unlocks, achievements)
+* Playtest and refine based on user feedback
+
+## Key Resources
+
+* Python/Pygame codebase and modular architecture
+* Hero, ability, and enemy content
+* Developer time and skills
+* Unit-test suite and uv environment
+
+## Value Propositions
+
+### For the Strategy Player
+
+* Meaningful decisions in every battle
+* Different team combinations and strategies
+* Varied encounters, enemy behaviors, and bosses
+* Challenge that rewards good planning
+
+### For the RPG Character Player
+
+* Diverse roster with distinct classes and abilities
+* Freedom to build a team of three around favorite heroes
+* Unlocks and achievements that provide a sense of progression
+* Short, simple, easy-to-learn combat
+
+## Customer Segments
+
+* **Strategy players:** enjoy turn-based games and want depth without complexity
+* **RPG character players:** enjoy classes, collecting heroes, and progression
+* **PC turn-based RPG fans:** players of games such as *Darkest Dungeon* or *Clair Obscur: Expedition 33* who want a smaller, more accessible alternative
+
+## Customer Relationships
+
+* Self-service and easy to learn
+* Community feedback shapes new content
+* Goals and rewards (achievements, unlockable heroes)
+* Regular updates with new heroes and dungeons
+
+## Channels
+
+* Steam or itch.io (potential release platforms)
+* GitHub repository
+* Word of mouth
+* RPG communities and social media
+
+## Cost Structure
+
+* Developer time (largest cost)
+* Art, audio, and asset creation or licenses
+* Platform fees if released commercially
+* Testing and marketing
+
+## Revenue Streams
+
+* One-time game purchase (approximately $5 planning price, consistent with the SOM scenarios)
+* Possible future paid expansions (hero or dungeon packs)
+
+## Key Metrics
+
+* **Daily active players:** unique players who launch the game each day
+* **Return rate:** share of players who come back after 1 day and after 7 days
+* **Run completion:** share of dungeon runs that reach the boss
+* **Heroes unlocked per player:** a measure of collection progress
+* **Copies sold and playtester feedback:** signs of market interest
+
+---
+
+# 10. Feasibility Plan
 
 ## Current Prototype
 
@@ -496,7 +570,7 @@ Final development will focus on:
 
 ---
 
-# 10. Technical Feasibility
+# 11. Technical Feasibility
 
 The project is feasible because the required technologies are already familiar and the core architecture has been implemented.
 
@@ -529,7 +603,7 @@ The modular architecture reduces the risk of changes in one system breaking unre
 
 ---
 
-# 11. Feasibility Assessment
+# 12. Feasibility Assessment
 
 | Area                    | Feasibility           |
 | ----------------------- | --------------------- |
@@ -549,7 +623,7 @@ The project is feasible because its scope is intentionally focused on a small si
 
 ---
 
-# 12. Conclusion
+# 13. Conclusion
 
 Warcraft Card Duels addresses a desire for a focused strategic RPG experience by combining team building, unique characters, turn-based combat, and dungeon progression.
 

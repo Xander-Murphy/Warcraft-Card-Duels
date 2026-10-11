@@ -30,7 +30,7 @@ Xander Murphy
 Players will be able to select from a variety of heros to create a team of 3
 
 ## Requirements
-- Maintain a substancial roster of over 30 heros
+- Maintain a substancial roster of unique heros
 - Each hero has a unique class, specialization, and stats
 - Each hero has 3-5 unique abilities
 - Players can create a team of 3 heros to traverse dungeons and other encounters
