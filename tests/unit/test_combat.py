@@ -141,6 +141,7 @@ class TestResolvingActions(unittest.TestCase):
     self.assertEqual(enemy.health, 100)
     self.assertTrue(hero.abilities[0].is_ready())
 
+  # Rule: an attack with no living targets does nothing and costs no cooldown.
   def test_attack_on_an_already_dead_target_fizzles_without_cooldown(self):
     fast = fighter("Fast", speed=9, abilities=[strike(power=500)])
     slow = fighter("Slow", speed=1, abilities=[strike(cooldown=3)])
@@ -250,6 +251,7 @@ class TestDamageOverTime(unittest.TestCase):
     self.assertEqual(health, [95, 90, 85, 85])
     self.assertEqual(victim.active_effects, [])
 
+  # Regression: poison used to bypass resistances and immunities instead of being nature damage.
   def test_poison_is_nature_damage_so_nature_resistance_applies(self):
     combat, victim = self.poisoned_fight()
     victim.resistances[SpellSchool.NATURE] = 100

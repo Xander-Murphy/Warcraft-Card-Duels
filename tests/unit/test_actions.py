@@ -115,6 +115,7 @@ class TestActionTargets(unittest.TestCase):
     self.assertFalse(action.can_execute())
     self.assertEqual(action.execute(), [])
 
+  # Rule: an attack with no living targets does nothing and costs no cooldown.
   def test_fizzled_action_does_not_spend_the_cooldown(self):
     koryne = KORYNE.clone()
     trog = RAGEFIRE_TROG.clone()
