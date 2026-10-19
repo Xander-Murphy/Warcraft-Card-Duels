@@ -9,6 +9,9 @@ from hero_data import KORYNE, BRAEKS
 
 class TestEncounterCloning(unittest.TestCase):
 
+  def test_an_unknown_dungeon_has_no_enemies(self):
+    self.assertEqual(generate_encounter("Nowhere", 1), [])
+
   def test_encounter_enemies_are_distinct_objects(self):
     # Wailing Caverns encounter 1 lists DEVIATE_RAVAGER twice, so duplicates
     # are likely. No two enemies may be the same object, and none may be a

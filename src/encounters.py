@@ -25,6 +25,7 @@ def generate_encounter(dungeon, encounter_number):
     case "Ragefire Chasm": encounter_pool = RAGEFIRE_ENCOUNTERS
     case "Wailing Caverns": encounter_pool = WAILING_CAVERNS_ENCOUNTERS
     case "The Deadmines": encounter_pool = DEADMINES_ENCOUNTERS
+    case _: return []
 
   enemies = encounter_pool.get(encounter_number, [])
 

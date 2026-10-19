@@ -153,14 +153,14 @@ class TestEndOfFight(ScreenTestCase):
     self.assertEqual(self.game.state, GameState.DUNGEON)
     self.assertIsNone(self.game.combat)
 
-  def test_enter_after_a_loss_returns_to_the_main_menu(self):
+  def test_enter_after_a_loss_ends_the_game(self):
     self.game.state = GameState.COMBAT
     self.press(pygame.K_RIGHT)
     self.finish_fight(hero_wins=False)
 
     self.press(pygame.K_RETURN)
 
-    self.assertEqual(self.game.state, GameState.MAIN_MENU)
+    self.assertEqual(self.game.state, GameState.GAME_OVER)
     self.assertIsNone(self.game.combat)
 
   def test_a_fight_won_by_playing_it_out_ends_in_the_dungeon(self):

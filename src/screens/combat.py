@@ -1,6 +1,5 @@
 import pygame
 
-from states import GameState
 from lib.colors import WHITE, GOLD, GREEN, GRAY, RED
 from combat_controller import (
   AbilitySelection, CombatController, HeroSelection, TargetSelection
@@ -52,11 +51,9 @@ class CombatScreen(Screen):
       controller.resolve_round()
       return
 
-    # The fight is over: a win goes back to the dungeon, a loss to the menu
-    game.end_combat()
-    game.state = (
-      GameState.DUNGEON if controller.heroes_won else GameState.MAIN_MENU
-    )
+    # The fight is over: Game decides what comes next (next encounter,
+    # dungeon cleared or game over)
+    game.finish_combat(controller.heroes_won)
 
   # --- Drawing ------------------------------------------------------------
 

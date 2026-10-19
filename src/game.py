@@ -9,6 +9,7 @@ from screens.dungeon import DungeonScreen
 from screens.encounter import EncounterScreen
 from hero_data import *
 from screens.combat import CombatScreen
+from screens.end_screens import GameOverScreen, GameWonScreen
 from combat import Combat
 
 
@@ -33,15 +34,15 @@ class Game:
 
     # one screen instance per state; each owns its own UI-only state
     # (cursor position, etc.) and reads/writes the shared data above.
-    # ENCOUNTER and COMBAT aren't built yet, so they're left out for now —
-    # reaching those states currently does nothing rather than crashing.
     self.screens = {
       GameState.MAIN_MENU: MainMenuScreen(),
       GameState.TEAM_SELECTION: TeamSelectionScreen(),
       GameState.DUNGEON_SELECTION: DungeonSelectionScreen(),
       GameState.DUNGEON: DungeonScreen(),
       GameState.ENCOUNTER: EncounterScreen(),
-      GameState.COMBAT: CombatScreen()
+      GameState.COMBAT: CombatScreen(),
+      GameState.GAME_OVER: GameOverScreen(),
+      GameState.GAME_WON: GameWonScreen()
     }
 
   def start_run(self):
@@ -56,6 +57,27 @@ class Game:
 
   def end_combat(self):
     self.combat = None
+
+  def finish_combat(self, heroes_won):
+    """End the current fight and move the run on.
+
+    A loss ends the run. A win counts the encounter as cleared: the dungeon is
+    won once the last encounter is cleared, otherwise the party goes back to
+    the dungeon for the next one. The party is not touched, so health,
+    cooldowns and effects carry over into the next fight.
+    """
+    self.end_combat()
+
+    if not heroes_won:
+      self.state = GameState.GAME_OVER
+      return
+
+    self.current_encounter += 1
+
+    if self.current_encounter >= self.total_encounters:
+      self.state = GameState.GAME_WON
+    else:
+      self.state = GameState.DUNGEON
 
   def handle_events(self):
     for event in pygame.event.get():
