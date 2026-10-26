@@ -268,6 +268,14 @@ class TestDrawing(ScreenTestCase):
     self.screen.draw(self.surface, self.game)
     return list(self.drawn)
 
+  def test_status_effects_draw_on_both_sides_without_error(self):
+    import effects_data as fx
+    self.game.party[0].add_effect(fx.ARCANE_BARRIER.clone())
+    self.game.current_enemies[0].add_effect(fx.POISON.clone())
+    self.game.current_enemies[0].add_effect(fx.ARMOR_BREAK.clone())
+
+    self.draw()
+
   def test_shows_what_each_enemy_plans_to_do(self):
     shown = self.draw()
 

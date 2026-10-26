@@ -13,6 +13,7 @@ from combat_controller import (
   HeroSelection,
   TargetSelection,
 )
+from effects_data import ARCANE_BARRIER, ARMOR_BREAK, POISON
 from enemy_behavior import RandomBehavior
 from enemy_data import DEFIAS_MINER, DEVIATE_RAVAGER, RAGEFIRE_TROG
 from hero_data import BRAEKS, GENJO, KORYNE
@@ -479,6 +480,45 @@ class TestFightEndedFromOutside(unittest.TestCase):
       enemy.take_damage(10_000)
 
     self.assertIsInstance(controller.state, FightOver)
+
+
+class TestStatusLabels(unittest.TestCase):
+
+  def test_each_active_effect_is_listed_with_its_rounds_left(self):
+    controller, heroes, enemies = make_controller()
+    hero = heroes[0]
+    hero.add_effect(ARCANE_BARRIER.clone())
+    hero.add_effect(POISON.clone())
+
+    self.assertEqual(
+      controller.status_labels(hero),
+      [("Arcane Barrier (2)", False), ("Poison (3)", True)],
+    )
+
+  def test_debuffs_and_damage_over_time_are_harmful_buffs_are_not(self):
+    controller, heroes, enemies = make_controller()
+    enemy = enemies[0]
+    enemy.add_effect(ARMOR_BREAK.clone())
+
+    self.assertEqual(controller.status_labels(enemy), [("Armor Break (2)", True)])
+
+  def test_the_count_goes_down_as_rounds_end(self):
+    controller, heroes, enemies = make_controller()
+    hero = heroes[0]
+    hero.add_effect(ARCANE_BARRIER.clone())
+    queue_for_everyone(controller)
+
+    controller.resolve_round()
+
+    self.assertEqual(controller.status_labels(hero), [("Arcane Barrier (1)", False)])
+
+  def test_defeated_characters_show_no_effects(self):
+    controller, heroes, enemies = make_controller()
+    enemy = enemies[0]
+    enemy.add_effect(POISON.clone())
+    enemy.take_damage(10_000)
+
+    self.assertEqual(controller.status_labels(enemy), [])
 
 
 if __name__ == "__main__":

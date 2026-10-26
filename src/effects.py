@@ -23,6 +23,10 @@ class StatusEffect(Prototype):
     self.stat = stat
     self.damage_school = damage_school
 
+  def is_harmful(self):
+    """True for effects that hurt whoever carries them (debuffs and DoTs)."""
+    return self.effect_type in (EffectType.DEBUFF, EffectType.DAMAGE_OVER_TIME)
+
   def is_active(self):
     return self.remaining_duration > 0
 

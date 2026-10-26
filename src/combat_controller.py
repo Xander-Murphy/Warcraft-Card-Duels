@@ -174,6 +174,21 @@ class CombatController:
   def intent_text(self, enemy):
     return self.describe_action(self.combat.action_for(enemy))
 
+  def status_labels(self, character):
+    """(label, is_harmful) for each active effect, e.g. ("Poison (2)", True).
+
+    The number is how many more rounds the effect lasts. A defeated
+    character shows nothing.
+    """
+    if not character.is_alive():
+      return []
+
+    return [
+      (f"{effect.name} ({effect.remaining_duration})", effect.is_harmful())
+      for effect in character.active_effects
+      if effect.is_active()
+    ]
+
   # --- Input (delegated to the current state) -----------------------------
 
   def move(self, step):

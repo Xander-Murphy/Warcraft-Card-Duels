@@ -7,6 +7,7 @@ from combat_controller import (
 from .base import Screen
 
 LOG_LINES = 6  # how many lines of the last round's results to show
+EFFECT_GAP = 16  # horizontal space between two status effects on one row
 
 
 class CombatScreen(Screen):
@@ -81,6 +82,7 @@ class CombatScreen(Screen):
       "banner": pygame.font.Font(None, 80),
       "name": pygame.font.Font(None, 32),
       "info": pygame.font.Font(None, 24),
+      "effect": pygame.font.Font(None, 20),
     }
 
     self._draw_header(screen, fonts, controller, game)
@@ -116,6 +118,7 @@ class CombatScreen(Screen):
     target = controller.highlighted_target()
 
     for enemy, x in zip(enemies, self._get_positions(len(enemies))):
+      self._draw_effects(screen, fonts["effect"], controller, enemy, (x, 106))
       self._text(
         screen, fonts["name"], enemy.name,
         self._name_color(enemy, enemy is target), (x, 130)
@@ -130,17 +133,18 @@ class CombatScreen(Screen):
           screen, fonts["info"], controller.intent_text(enemy), RED, (x, 184)
         )
 
+
   def _draw_log_and_banner(self, screen, fonts, controller):
     if controller.is_over:
       won = controller.heroes_won
       self._text(
         screen, fonts["banner"], "VICTORY" if won else "DEFEAT",
-        GREEN if won else RED, (500, 250)
+        GREEN if won else RED, (500, 235)
       )
 
     for index, result in enumerate(controller.log[-LOG_LINES:]):
       self._text(
-        screen, fonts["info"], result.description, GRAY, (500, 310 + index * 24)
+        screen, fonts["info"], result.description, GRAY, (500, 290 + index * 22)
       )
 
   def _draw_heroes(self, screen, fonts, controller):
@@ -155,6 +159,7 @@ class CombatScreen(Screen):
       else:
         highlighted = index == controller.hero_index and not controller.is_over
 
+      self._draw_effects(screen, fonts["effect"], controller, hero, (x, 446))
       self._text(
         screen, fonts["name"], hero.name,
         self._name_color(hero, highlighted), (x, 470)
@@ -168,6 +173,26 @@ class CombatScreen(Screen):
         self._text(
           screen, fonts["info"], controller.queued_text(hero), GREEN, (x, 522)
         )
+
+  def _draw_effects(self, screen, font, controller, character, center):
+    """One centred row of status effects: harmful in red, helpful in green."""
+    labels = controller.status_labels(character)
+
+    if not labels:
+      return
+
+    rendered = [
+      font.render(label, True, RED if harmful else GREEN)
+      for label, harmful in labels
+    ]
+    width = sum(text.get_width() for text in rendered)
+    width += EFFECT_GAP * (len(rendered) - 1)
+
+    x, y = center
+    left = x - width / 2
+    for text in rendered:
+      screen.blit(text, text.get_rect(midleft=(left, y)))
+      left += text.get_width() + EFFECT_GAP
 
   def _ability_label(self, controller, ability):
     if controller.is_usable(ability):
