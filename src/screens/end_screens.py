@@ -3,6 +3,7 @@ import pygame
 from states import GameState
 from lib.colors import WHITE, GOLD, GREEN, GRAY, RED
 from .base import Screen
+from .widgets import draw_status_lines, draw_text
 
 
 class EndScreen(Screen):
@@ -29,21 +30,12 @@ class EndScreen(Screen):
     text_font = pygame.font.Font(None, 36)
     info_font = pygame.font.Font(None, 28)
 
-    self._text(screen, title_font, self.title, self.title_color, (500, 120))
-    self._text(screen, text_font, self.subtitle(game), GOLD, (500, 200))
+    draw_text(screen, title_font, self.title, self.title_color, (500, 120))
+    draw_text(screen, text_font, self.subtitle(game), GOLD, (500, 200))
 
-    for index, hero in enumerate(game.party):
-      status = "Defeated" if not hero.is_alive() else f"{hero.health}/{hero.max_health} HP"
-      color = GRAY if not hero.is_alive() else WHITE
-      self._text(
-        screen, text_font, f"{hero.name} - {status}", color, (500, 300 + index * 50)
-      )
+    draw_status_lines(screen, text_font, game.party, top=300, spacing=50)
 
-    self._text(screen, info_font, self.prompt, GRAY, (500, 620))
-
-  def _text(self, screen, font, text, color, center):
-    rendered = font.render(text, True, color)
-    screen.blit(rendered, rendered.get_rect(center=center))
+    draw_text(screen, info_font, self.prompt, GRAY, (500, 620))
 
 
 class GameOverScreen(EndScreen):

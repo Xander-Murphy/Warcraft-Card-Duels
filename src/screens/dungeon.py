@@ -3,6 +3,7 @@ import pygame
 from states import GameState
 from lib.colors import WHITE, GOLD, GRAY
 from .base import Screen
+from .widgets import draw_status_lines, draw_text
 from encounters import generate_encounter
 
 
@@ -22,29 +23,20 @@ class DungeonScreen(Screen):
     text_font = pygame.font.Font(None, 36)
     info_font = pygame.font.Font(None, 28)
 
-    title = title_font.render(game.selected_dungeon, True, WHITE)
-    title_rect = title.get_rect(center=(500, 80))
-    screen.blit(title, title_rect)
-
-    progress_text = text_font.render(
-      f"Encounter {game.current_encounter + 1 } / {game.total_encounters}", True, GOLD
+    draw_text(screen, title_font, game.selected_dungeon, WHITE, (500, 80))
+    draw_text(
+      screen, text_font,
+      f"Encounter {game.current_encounter + 1} / {game.total_encounters}",
+      GOLD, (500, 150)
     )
-    progress_rect = progress_text.get_rect(center=(500, 180))
-    screen.blit(progress_text, progress_rect)
 
-    encounter_text = text_font.render(
-      "A group of enemies awaits...", True, WHITE
+    # Damage carries over between fights, so show where the party stands
+    draw_text(screen, info_font, "Your Party", GRAY, (500, 230))
+    draw_status_lines(screen, text_font, game.party, top=270, spacing=45)
+
+    draw_text(
+      screen, text_font, "A group of enemies awaits...", WHITE, (500, 450)
     )
-    encounter_rect = encounter_text.get_rect(center=(500, 300))
-    screen.blit(encounter_text, encounter_rect)
-
-    boss_text = info_font.render(
-      "Boss awaits at the end of the dungeon", True, GRAY
+    draw_text(
+      screen, info_font, "Enter: Begin Encounter | Escape: Back", GRAY, (500, 620)
     )
-    boss_rect = boss_text.get_rect(center=(500, 400))
-    screen.blit(boss_text, boss_rect)
-
-    instruction_text = info_font.render(
-      "Enter: Begin Encounter | Escape: Back", True, GRAY)
-    instruction_rect = instruction_text.get_rect(center=(500, 620))
-    screen.blit(instruction_text, instruction_rect)
