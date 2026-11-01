@@ -3,11 +3,13 @@ import pygame
 from states import GameState
 from lib.colors import WHITE, GOLD, GREEN, GRAY
 from .base import Screen
+from .hero_details import HeroDetails
 
 
 class TeamSelectionScreen(Screen):
   def __init__(self):
     self.hero_selection = 0
+    self.details = HeroDetails()
 
   def handle_input(self, event, game):
     match event.key:
@@ -54,9 +56,13 @@ class TeamSelectionScreen(Screen):
       else:
         hero_color = WHITE
 
-      hero_text = hero_font.render(f"{index + 1}. {hero.name} - {hero.specialization} {hero.character_class}", True, hero_color)
-      hero_rect = hero_text.get_rect(center=(500, 180 + index * 60))
+      hero_text = hero_font.render(f"{index + 1}. {hero.name}", True, hero_color)
+      hero_rect = hero_text.get_rect(midleft=(80, 180 + index * 60))
       screen.blit(hero_text, hero_rect)
+
+    # Stats and abilities of the hero under the cursor
+    highlighted = game.available_heroes[self.hero_selection]
+    self.details.draw(screen, highlighted, (420, 150))
 
     team_text = hero_font.render(
       f"Your Team: {len(game.selected_heroes)} / 3", True, WHITE

@@ -21,12 +21,17 @@ class AbilityEffect(ABC):
   system don't change (Open/Closed).
   """
 
+  # Whether this effect hurts its target (used to describe abilities)
+  deals_damage = False
+
   @abstractmethod
   def apply(self, source, target, ability) -> EffectResult:
     """Apply the effect and return an EffectResult."""
 
 
 class DamageEffect(AbilityEffect):
+  deals_damage = True
+
   def calculate_damage(self, source, ability):
     # Ability power scaled by the source's attack as a percentage bonus.
     # Kept in one place so balancing only touches this method.

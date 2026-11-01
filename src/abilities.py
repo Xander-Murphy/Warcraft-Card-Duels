@@ -27,6 +27,9 @@ class Ability(Prototype):
     # What the ability does, as a list of AbilityEffect objects (composition)
     self.effects = effects if effects else []
 
+  def deals_damage(self):
+    return any(effect.deals_damage for effect in self.effects)
+
   def is_ready(self):
     return self.current_cooldown == 0
 
