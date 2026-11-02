@@ -8,7 +8,11 @@ from actions import Action
 from characters import Character
 from combat import Combat
 from enemies import Enemy
-from enemy_behavior import EnemyBehavior, RandomBehavior
+from effects_data import SURVIVAL_INSTINCTS
+from enemy_behavior import (
+  BEHAVIORS, AggressiveBehavior, BullyBehavior, EnemyBehavior, FocusedBehavior,
+  RandomBehavior, RuleBehavior, roll_behavior
+)
 from enemy_data import RAGEFIRE_TROG
 from hero_data import KORYNE
 from lib.types import SpellSchool, TargetType
@@ -182,6 +186,161 @@ class TestBehaviorIsAStrategy(unittest.TestCase):
     planned = combat.plan_enemy_actions()
 
     self.assertEqual(planned[0].targets, [heroes[1]])
+
+
+def strong_ability(power, target_type=TargetType.SINGLE_ENEMY, cooldown=2):
+  return Ability(
+    f"Power {power}", "", power, cooldown, target_type, SpellSchool.PHYSICAL,
+    effects=[DamageEffect()]
+  )
+
+
+def always(behavior_type, seed=0):
+  """A rule behavior that follows its rule every time (no random 25%)."""
+  return behavior_type(random.Random(seed), discipline=1.0)
+
+
+def target_of(behavior, enemy, heroes):
+  action = behavior.choose_action(enemy, Battlefield(heroes, [enemy]))
+  assert action is not None
+  return action.targets
+
+
+class TestStrongestAbility(unittest.TestCase):
+
+  def test_a_ready_special_beats_the_basic_attack(self):
+    enemy = make_enemy(abilities=[strong_ability(20)])
+
+    self.assertEqual(always(AggressiveBehavior).strongest_ability(enemy).power, 20)
+
+  def test_the_most_powerful_ready_ability_is_chosen(self):
+    enemy = make_enemy(abilities=[strong_ability(20), strong_ability(30)])
+
+    self.assertEqual(always(BullyBehavior).strongest_ability(enemy).power, 30)
+
+  def test_a_special_on_cooldown_falls_back_to_the_basic_attack(self):
+    special = strong_ability(30)
+    enemy = make_enemy(abilities=[special])
+    special.use()
+
+    self.assertIs(always(FocusedBehavior).strongest_ability(enemy), enemy.basic_attack)
+
+  def test_an_area_ability_still_hits_every_living_hero(self):
+    enemy = make_enemy(abilities=[strong_ability(30, TargetType.ALL_ENEMIES)])
+    heroes = [make_hero("A"), make_hero("B", health=10), make_hero("C")]
+    heroes[2].take_damage(10_000)
+
+    self.assertEqual(target_of(always(AggressiveBehavior), enemy, heroes), heroes[:2])
+
+
+class TestAggressiveBehavior(unittest.TestCase):
+
+  def test_attacks_the_hero_with_the_least_health_left(self):
+    heroes = [make_hero("A", health=80), make_hero("B", health=100), make_hero("C")]
+    heroes[1].take_damage(70)  # B now has 30, the least
+
+    self.assertEqual(target_of(always(AggressiveBehavior), make_enemy(), heroes), [heroes[1]])
+
+  def test_ignores_dead_heroes(self):
+    heroes = [make_hero("A", health=40), make_hero("B", health=100)]
+    heroes[0].take_damage(10_000)
+
+    self.assertEqual(target_of(always(AggressiveBehavior), make_enemy(), heroes), [heroes[1]])
+
+  def test_ties_are_broken_at_random_between_the_tied_heroes(self):
+    heroes = [make_hero("A", health=30), make_hero("B", health=30), make_hero("C")]
+
+    chosen = {
+      target_of(always(AggressiveBehavior, seed), make_enemy(), heroes)[0].name
+      for seed in range(30)
+    }
+
+    self.assertEqual(chosen, {"A", "B"})
+
+
+class TestBullyBehavior(unittest.TestCase):
+
+  def test_attacks_the_hero_with_the_lowest_defense(self):
+    heroes = [make_hero("A", defense=3), make_hero("B", defense=0), make_hero("C", defense=2)]
+
+    self.assertEqual(target_of(always(BullyBehavior), make_enemy(), heroes), [heroes[1]])
+
+  def test_defense_buffs_count(self):
+    heroes = [make_hero("A", defense=3), make_hero("B", defense=0)]
+    heroes[1].add_effect(SURVIVAL_INSTINCTS.clone())  # B rises to 7 defense
+
+    self.assertEqual(target_of(always(BullyBehavior), make_enemy(), heroes), [heroes[0]])
+
+
+class TestFocusedBehavior(unittest.TestCase):
+
+  def test_keeps_hitting_the_same_hero_round_after_round(self):
+    behavior = always(FocusedBehavior)
+    enemy = make_enemy()
+    heroes = [make_hero("A"), make_hero("B"), make_hero("C")]
+    first = target_of(behavior, enemy, heroes)[0]
+
+    for other in heroes:
+      if other is not first:
+        other.take_damage(90)  # even a weaker hero doesn't pull it away
+
+    for _ in range(5):
+      self.assertEqual(target_of(behavior, enemy, heroes), [first])
+
+  def test_picks_a_new_living_hero_once_its_target_dies(self):
+    behavior = always(FocusedBehavior)
+    enemy = make_enemy()
+    heroes = [make_hero("A"), make_hero("B")]
+    first = target_of(behavior, enemy, heroes)[0]
+
+    first.take_damage(10_000)
+    second = target_of(behavior, enemy, heroes)[0]
+
+    self.assertIsNot(second, first)
+    self.assertTrue(second.is_alive())
+
+
+class TestDiscipline(unittest.TestCase):
+
+  def test_follows_its_rule_three_times_in_four_otherwise_acts_randomly(self):
+    behavior = AggressiveBehavior(random.Random(7))
+    heroes = [make_hero("Weak", health=20), make_hero("B"), make_hero("C")]
+    trials = 3000
+
+    weak_hits = sum(
+      target_of(behavior, make_enemy(), heroes)[0].name == "Weak"
+      for _ in range(trials)
+    )
+
+    # 75% by rule, plus a third of the random 25%
+    self.assertAlmostEqual(weak_hits / trials, 0.75 + 0.25 / 3, delta=0.03)
+
+  def test_the_default_discipline_is_75_percent(self):
+    self.assertEqual(AggressiveBehavior().discipline, 0.75)
+    self.assertEqual(RuleBehavior.DISCIPLINE, 0.75)
+
+
+class TestRollBehavior(unittest.TestCase):
+
+  def test_every_behavior_can_be_rolled(self):
+    rng = random.Random(0)
+    rolled = {type(roll_behavior(rng)) for _ in range(200)}
+
+    self.assertEqual(rolled, set(BEHAVIORS))
+
+  def test_the_four_behaviors_are_equally_likely(self):
+    rng = random.Random(1)
+    trials = 4000
+    counts = {behavior_type: 0 for behavior_type in BEHAVIORS}
+    for _ in range(trials):
+      counts[type(roll_behavior(rng))] += 1
+
+    for behavior_type, count in counts.items():
+      with self.subTest(behavior=behavior_type.name):
+        self.assertAlmostEqual(count / trials, 0.25, delta=0.03)
+
+  def test_each_roll_is_a_new_object(self):
+    self.assertIsNot(roll_behavior(), roll_behavior())
 
 
 if __name__ == "__main__":

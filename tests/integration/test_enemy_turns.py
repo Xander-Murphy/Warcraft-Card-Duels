@@ -100,13 +100,16 @@ class TestPlanEnemyActions(unittest.TestCase):
 class TestFullFights(unittest.TestCase):
   """Heroes versus Wailing Caverns enemies that have no abilities of their own."""
 
-  def play(self, seed):
+  def play(self, seed, make_behavior=None):
     rng = random.Random(seed)
     enemies = [
       seeded(DEVIATE_RAVAGER.clone(), seed),
       seeded(DEVIATE_GUARDIAN.clone(), seed + 1),
       seeded(DEVIATE_RAVAGER.clone(), seed + 2),
     ]
+    if make_behavior is not None:
+      for enemy in enemies:
+        enemy.behavior = make_behavior()
     heroes = [KORYNE.clone(), SCATTER.clone(), BRAEKS.clone()]
     combat = Combat(heroes, enemies)
 
@@ -128,6 +131,19 @@ class TestFullFights(unittest.TestCase):
       combat.resolve_round()
 
     return combat, heroes, enemies
+
+  def test_every_behavior_plays_a_whole_fight_to_the_end(self):
+    from enemy_behavior import BEHAVIORS
+
+    for behavior_type in BEHAVIORS:
+      for seed in range(5):
+        with self.subTest(behavior=behavior_type.name, seed=seed):
+          combat, heroes, _ = self.play(
+            seed, lambda: behavior_type(random.Random(seed))
+          )
+
+          self.assertTrue(combat.is_over())
+          self.assertGreater(sum(h.max_health - h.health for h in heroes), 0)
 
   def test_enemies_deal_damage_and_every_fight_reaches_a_conclusion(self):
     for seed in range(15):

@@ -1,5 +1,6 @@
 import random
 
+from enemy_behavior import roll_behavior
 from enemy_data import *
 
 RAGEFIRE_ENCOUNTERS = {
@@ -34,5 +35,11 @@ def generate_encounter(dungeon, encounter_number):
 
   enemy_count = random.randint(2, 3)
 
-  # clone so repeated enemies (and later encounters) never share state
-  return [enemy.clone() for enemy in random.choices(enemies, k=enemy_count)]
+  # clone so repeated enemies (and later encounters) never share state,
+  # and give each one its own behavior so the same enemy type can act
+  # differently from fight to fight
+  spawned = [enemy.clone() for enemy in random.choices(enemies, k=enemy_count)]
+  for enemy in spawned:
+    enemy.behavior = roll_behavior()
+
+  return spawned

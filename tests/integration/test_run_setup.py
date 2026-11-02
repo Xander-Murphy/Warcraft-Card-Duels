@@ -2,12 +2,26 @@ import random
 import unittest
 
 from encounters import generate_encounter
+from enemy_behavior import BEHAVIORS
 from enemy_data import DEVIATE_RAVAGER
 from game import Game
 from hero_data import KORYNE, BRAEKS
 
 
 class TestEncounterCloning(unittest.TestCase):
+
+  def test_each_spawned_enemy_gets_its_own_rolled_behavior(self):
+    seen = set()
+
+    for seed in range(40):
+      random.seed(seed)
+      enemies = generate_encounter("The Deadmines", 3)
+      behaviors = [enemy.behavior for enemy in enemies]
+
+      self.assertEqual(len({id(behavior) for behavior in behaviors}), len(enemies))
+      seen.update(type(behavior) for behavior in behaviors)
+
+    self.assertEqual(seen, set(BEHAVIORS))
 
   def test_an_unknown_dungeon_has_no_enemies(self):
     self.assertEqual(generate_encounter("Nowhere", 1), [])
