@@ -37,6 +37,11 @@ class TestHeroDetails(unittest.TestCase):
     self.assertIn("Arcane Blast - Single Enemy - Power 30 - Cooldown 2", texts)
     self.assertIn("Arcane Barrier - Self - Cooldown 3", texts)
 
+  def test_heals_show_how_much_they_heal(self):
+    from hero_data import LIORA
+
+    self.assertIn("Flash Heal - Single Ally - Heal 30 - Cooldown 1", self.texts(LIORA))
+
 
 class TestDealsDamage(unittest.TestCase):
 

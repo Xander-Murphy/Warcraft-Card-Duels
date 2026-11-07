@@ -20,7 +20,9 @@ class Game:
     self.state = GameState.MAIN_MENU
 
     # shared game data — not tied to any one screen
-    self.available_heroes = [KORYNE, GENJO, SCATTER, BRAEKS]
+    self.available_heroes = [
+      KORYNE, GENJO, SCATTER, BRAEKS, LIORA, TORVALD, VESK, TAMARU
+    ]
     self.selected_heroes = []  # heroes the player picks for their team
     self.party = []  # cloned copies of those heroes used in a dungeon run
 

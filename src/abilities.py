@@ -30,6 +30,9 @@ class Ability(Prototype):
   def deals_damage(self):
     return any(effect.deals_damage for effect in self.effects)
 
+  def heals(self):
+    return any(effect.heals for effect in self.effects)
+
   def is_ready(self):
     return self.current_cooldown == 0
 

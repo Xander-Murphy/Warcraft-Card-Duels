@@ -89,3 +89,51 @@ SURVIVAL_INSTINCTS = StatusEffect(
   2,
   stat=Stat.DEFENSE
 )
+
+
+# --- Week 11 heroes ----------------------------------------------------------
+
+CORRUPTION = StatusEffect(
+  "Corruption",
+  EffectType.DAMAGE_OVER_TIME,
+  EffectCategory.CURSE,
+  12,
+  4,
+  damage_school=SpellSchool.SHADOW
+)
+
+CURSE_OF_WEAKNESS = StatusEffect(
+  "Curse of Weakness",
+  EffectType.DEBUFF,
+  EffectCategory.CURSE,
+  10,
+  3,
+  stat=Stat.ATTACK
+)
+
+FLAME_SHOCK = StatusEffect(
+  "Flame Shock",
+  EffectType.DAMAGE_OVER_TIME,
+  EffectCategory.MAGICAL,
+  6,
+  3,
+  damage_school=SpellSchool.FIRE
+)
+
+CONSECRATION = StatusEffect(
+  "Consecration",
+  EffectType.DAMAGE_OVER_TIME,
+  EffectCategory.MAGICAL,
+  5,
+  2,
+  damage_school=SpellSchool.HOLY
+)
+
+DEVOTION_AURA = StatusEffect(
+  "Devotion Aura",
+  EffectType.BUFF,
+  EffectCategory.MAGICAL,
+  4,
+  2,
+  stat=Stat.DEFENSE
+)

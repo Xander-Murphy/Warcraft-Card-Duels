@@ -43,6 +43,26 @@ class TestTeamSelectionDetails(unittest.TestCase):
 
     self.assertIs(self.shown_hero(), self.game.available_heroes[1])
 
+  def test_all_eight_heroes_can_be_picked(self):
+    from hero_data import (
+      BRAEKS, GENJO, KORYNE, LIORA, SCATTER, TAMARU, TORVALD, VESK
+    )
+
+    self.assertEqual(
+      self.game.available_heroes,
+      [KORYNE, GENJO, SCATTER, BRAEKS, LIORA, TORVALD, VESK, TAMARU],
+    )
+
+    for _ in range(4):  # down to Liora, the first new hero
+      self.screen.handle_input(
+        pygame.event.Event(pygame.KEYDOWN, key=pygame.K_DOWN), self.game
+      )
+    self.screen.handle_input(
+      pygame.event.Event(pygame.KEYDOWN, key=pygame.K_SPACE), self.game
+    )
+
+    self.assertEqual(self.game.selected_heroes, [LIORA])
+
   def test_every_hero_draws_without_error(self):
     for hero in self.game.available_heroes:
       HeroDetails().draw(self.surface, hero, (420, 150))

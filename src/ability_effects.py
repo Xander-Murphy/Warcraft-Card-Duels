@@ -21,8 +21,18 @@ class AbilityEffect(ABC):
   system don't change (Open/Closed).
   """
 
-  # Whether this effect hurts its target (used to describe abilities)
+  # What this effect does to its target (used to describe abilities)
   deals_damage = False
+  heals = False
+
+  @staticmethod
+  def scaled_power(source, ability):
+    """Ability power scaled by the source's attack as a percentage bonus.
+
+    Damage and healing both use this, so balancing touches one place.
+    """
+    attack_bonus = 1 + source.get_stat(Stat.ATTACK) / 100
+    return round(ability.power * attack_bonus)
 
   @abstractmethod
   def apply(self, source, target, ability) -> EffectResult:
@@ -33,10 +43,7 @@ class DamageEffect(AbilityEffect):
   deals_damage = True
 
   def calculate_damage(self, source, ability):
-    # Ability power scaled by the source's attack as a percentage bonus.
-    # Kept in one place so balancing only touches this method.
-    attack_bonus = 1 + source.get_stat(Stat.ATTACK) / 100
-    return round(ability.power * attack_bonus)
+    return self.scaled_power(source, ability)
 
   def apply(self, source, target, ability):
     school = ability.school
@@ -57,8 +64,16 @@ class DamageEffect(AbilityEffect):
 
 
 class HealEffect(AbilityEffect):
+  """Restores health, scaled by the healer's attack like damage is.
+
+  Healing never goes past max health, and targeting only offers living
+  allies, so a defeated hero cannot be healed back.
+  """
+
+  heals = True
+
   def apply(self, source, target, ability):
-    restored = target.heal(ability.power)
+    restored = target.heal(self.scaled_power(source, ability))
 
     return EffectResult(
       source, target,

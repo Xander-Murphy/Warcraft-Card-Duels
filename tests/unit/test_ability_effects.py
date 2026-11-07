@@ -71,6 +71,16 @@ class TestHealEffect(unittest.TestCase):
     self.assertEqual(result.amount, 30)
     self.assertEqual(target.health, 100)
 
+  def test_heal_scales_with_the_healers_attack_like_damage(self):
+    source = make_character(attack=20)
+    target = make_character()
+    target.take_damage(80)
+    ability = make_ability([HealEffect()], power=30, school=SpellSchool.HOLY)
+
+    result = HealEffect().apply(source, target, ability)
+
+    self.assertEqual(result.amount, 36)
+
 
 class TestApplyStatusEffect(unittest.TestCase):
 

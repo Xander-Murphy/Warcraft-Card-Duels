@@ -60,6 +60,8 @@ class HeroDetails:
 
     if ability.deals_damage():
       parts.append(f"Power {ability.power}")
+    if ability.heals():
+      parts.append(f"Heal {ability.power}")
 
     parts.append(f"Cooldown {ability.cooldown}")
     return " - ".join(parts)

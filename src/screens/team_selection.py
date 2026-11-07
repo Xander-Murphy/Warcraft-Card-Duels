@@ -57,7 +57,7 @@ class TeamSelectionScreen(Screen):
         hero_color = WHITE
 
       hero_text = hero_font.render(f"{index + 1}. {hero.name}", True, hero_color)
-      hero_rect = hero_text.get_rect(midleft=(80, 180 + index * 60))
+      hero_rect = hero_text.get_rect(midleft=(80, 160 + index * 45))
       screen.blit(hero_text, hero_rect)
 
     # Stats and abilities of the hero under the cursor
