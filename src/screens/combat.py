@@ -7,6 +7,7 @@ from combat_controller import (
 from .base import Screen
 
 LOG_LINES = 6  # how many lines of the last round's results to show
+ABILITY_ROW_WIDTH = 950  # the ability row's slots share this much of the screen
 EFFECT_GAP = 16  # horizontal space between two status effects on one row
 
 
@@ -66,6 +67,11 @@ class CombatScreen(Screen):
     start_x = center_x - total_width / 2
 
     return [start_x + index * spacing for index in range(count)]
+
+  def _ability_positions(self, count):
+    """Ability slots, packed closer together as a hero gains abilities so
+    the whole row (abilities plus the basic attack) stays on screen."""
+    return self._get_positions(count, spacing=min(250, ABILITY_ROW_WIDTH // count))
 
   def _text(self, screen, font, text, color, center):
     rendered = font.render(text, True, color)
@@ -208,7 +214,7 @@ class CombatScreen(Screen):
     choosing = isinstance(controller.state, (AbilitySelection, TargetSelection))
 
     for index, (ability, x) in enumerate(
-      zip(abilities, self._get_positions(len(abilities)))
+      zip(abilities, self._ability_positions(len(abilities)))
     ):
       selected = choosing and index == controller.ability_index
 

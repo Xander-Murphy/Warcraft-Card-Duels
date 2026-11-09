@@ -37,11 +37,12 @@ ARCANE_BARRIER = Ability(
 # Genjo - Rogue / Subtlety
 BACKSTAB = Ability(
   "Backstab",
-  "Deals physical damage to one enemy",
+  "Strikes one enemy quickly, before most others act",
   25,
   2,
   TargetType.SINGLE_ENEMY,
   SpellSchool.PHYSICAL,
+  priority=5,
   effects=[DamageEffect()]
 )
 
@@ -120,9 +121,9 @@ BERSERKER_RAGE = Ability(
 
 WHIRLWIND = Ability(
   "Whirlwind",
-  "Deals physical damage to all enemies",
-  15,
-  3,
+  "Deals heavy physical damage to all enemies",
+  18,
+  4,
   TargetType.ALL_ENEMIES,
   SpellSchool.PHYSICAL,
   effects=[DamageEffect()]
@@ -250,4 +251,46 @@ HEALING_WAVE = Ability(
   TargetType.SINGLE_ALLY,
   SpellSchool.NATURE,
   effects=[HealEffect()]
+)
+
+# --- Fourth abilities for the original heroes --------------------------------
+
+ARCANE_MISSILES = Ability(
+  "Arcane Missiles",
+  "Deals arcane damage and weakens the enemy to arcane for 3 rounds",
+  18,
+  3,
+  TargetType.SINGLE_ENEMY,
+  SpellSchool.ARCANE,
+  effects=[DamageEffect(), ApplyStatusEffect(fx.ARCANE_VULNERABILITY)]
+)
+
+RUPTURE = Ability(
+  "Rupture",
+  "Deals physical damage, then makes the enemy bleed for 3 rounds",
+  10,
+  3,
+  TargetType.SINGLE_ENEMY,
+  SpellSchool.PHYSICAL,
+  effects=[DamageEffect(), ApplyStatusEffect(fx.BLEED)]
+)
+
+AIMED_SHOT = Ability(
+  "Aimed Shot",
+  "Deals heavy physical damage to one enemy",
+  35,
+  3,
+  TargetType.SINGLE_ENEMY,
+  SpellSchool.PHYSICAL,
+  effects=[DamageEffect()]
+)
+
+SUNDER_ARMOR = Ability(
+  "Sunder Armor",
+  "Deals physical damage and lowers the enemy's defense for 2 rounds",
+  15,
+  2,
+  TargetType.SINGLE_ENEMY,
+  SpellSchool.PHYSICAL,
+  effects=[DamageEffect(), ApplyStatusEffect(fx.ARMOR_BREAK)]
 )

@@ -268,6 +268,14 @@ class TestDrawing(ScreenTestCase):
     self.screen.draw(self.surface, self.game)
     return list(self.drawn)
 
+  def test_the_ability_row_stays_on_screen_for_up_to_five_entries(self):
+    # Four abilities plus the basic attack used to run off both edges
+    for count in range(1, 6):
+      with self.subTest(count=count):
+        for x in self.screen._ability_positions(count):
+          self.assertGreaterEqual(x, 100)
+          self.assertLessEqual(x, 900)
+
   def test_status_effects_draw_on_both_sides_without_error(self):
     import effects_data as fx
     self.game.party[0].add_effect(fx.ARCANE_BARRIER.clone())

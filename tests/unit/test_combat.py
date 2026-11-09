@@ -362,9 +362,8 @@ class TestBasicAttack(unittest.TestCase):
     dummy = fighter("Dummy", health=100_000)
     combat = Combat([genjo], [dummy])
 
-    for index in (1, 2, 0):  # Evasion, Cloak of Shadows, Backstab
-      combat.queue_action(genjo, genjo.abilities[index], [dummy])
-      combat.resolve_round()
+    for ability in genjo.abilities:
+      ability.use()
 
     self.assertEqual(genjo.usable_abilities(), [genjo.basic_attack])
     self.assertFalse(combat.is_ready_to_resolve())

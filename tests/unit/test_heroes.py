@@ -46,12 +46,12 @@ class TestHeroes(unittest.TestCase):
     for hero in heroes:
       self.assertGreater(len(hero.abilities), 0)
 
-  def test_heroes_have_three_abilities(self):
+  def test_heroes_have_four_abilities(self):
     heroes = [KORYNE, GENJO, SCATTER, BRAEKS]
 
     for hero in heroes:
       with self.subTest(hero=hero.name):
-        self.assertEqual(len(hero.abilities), 3)
+        self.assertEqual(len(hero.abilities), 4)
 
   def test_koryne_arcane_blast(self):
     ability = KORYNE.abilities[0]

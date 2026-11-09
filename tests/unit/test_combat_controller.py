@@ -21,7 +21,7 @@ from lib.types import SpellSchool, TargetType
 
 # Koryne's abilities: 0 Arcane Blast (single enemy), 1 Arcane Explosion
 # (all enemies), 2 Arcane Barrier (self), 3 basic attack.
-BLAST, EXPLOSION, BARRIER, BASIC = 0, 1, 2, 3
+BLAST, EXPLOSION, BARRIER, MISSILES, BASIC = 0, 1, 2, 3, 4
 
 
 def seeded(enemy, seed=0):
@@ -138,7 +138,9 @@ class TestAbilitySelection(unittest.TestCase):
     controller, heroes, _ = make_controller()
     choose(controller, 0, 0)
 
-    self.assertEqual(len(controller.selectable_abilities), 4)
+    self.assertEqual(
+      len(controller.selectable_abilities), len(heroes[0].abilities) + 1
+    )
     controller.move(-1)
     self.assertIs(controller.selected_ability, heroes[0].basic_attack)
     controller.move(1)
@@ -250,7 +252,8 @@ class TestTargetSelection(unittest.TestCase):
       "Test Heal", "", 25, 1, TargetType.SINGLE_ALLY, SpellSchool.HOLY,
       effects=[HealEffect()]
     ))
-    choose(controller, 0, 3)  # the new ability sits before the basic attack
+    # the new ability sits last, just before the basic attack
+    choose(controller, 0, len(heroes[0].abilities) - 1)
 
     controller.confirm()
     self.assertIsInstance(controller.state, TargetSelection)

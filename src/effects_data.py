@@ -137,3 +137,12 @@ DEVOTION_AURA = StatusEffect(
   2,
   stat=Stat.DEFENSE
 )
+
+BLEED = StatusEffect(
+  "Bleed",
+  EffectType.DAMAGE_OVER_TIME,
+  EffectCategory.PHYSICAL,
+  7,
+  3,
+  damage_school=SpellSchool.PHYSICAL
+)
