@@ -1,6 +1,8 @@
 from abilities import Ability
-from ability_effects import ApplyStatusEffect, DamageEffect, HealEffect
-from lib.types import SpellSchool, TargetType
+from ability_effects import (
+  ApplyStatusEffect, DamageEffect, DispelEffect, HealEffect
+)
+from lib.types import EffectCategory, SpellSchool, TargetType
 import effects_data as fx
 
 # Koryne - Mage / Arcane
@@ -56,15 +58,21 @@ EVASION = Ability(
   effects=[ApplyStatusEffect(fx.PHYSICAL_IMMUNITY)]
 )
 
-# TODO: Cloak should also remove magical effects (needs a DispelEffect)
+# Cloak removes harmful magic, curses and poisons, but not physical effects
+# such as Bleed or Armor Break
 CLOAK_OF_SHADOWS = Ability(
   "Cloak of Shadows",
-  "Become immune to magical damage and remove magical effects",
+  "Become immune to magical damage and remove magical effects and poisons",
   0,
   4,
   TargetType.SELF,
   priority=10,
-  effects=[ApplyStatusEffect(fx.MAGICAL_IMMUNITY)]
+  effects=[
+    DispelEffect(
+      [EffectCategory.MAGICAL, EffectCategory.CURSE, EffectCategory.POISON]
+    ),
+    ApplyStatusEffect(fx.MAGICAL_IMMUNITY),
+  ]
 )
 
 # Scatter Hunter / Survival

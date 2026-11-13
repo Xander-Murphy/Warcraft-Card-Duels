@@ -95,3 +95,22 @@ class ApplyStatusEffect(AbilityEffect):
       source, target,
       f"{target.name} is affected by {self.status.name}"
     )
+
+
+class DispelEffect(AbilityEffect):
+  """Removes the target's harmful effects of the given categories.
+
+  Helpful effects are never touched, so a dispel can't strip a buff.
+  """
+
+  def __init__(self, categories):
+    self.categories = frozenset(categories)
+
+  def apply(self, source, target, ability):
+    removed = target.remove_harmful_effects(self.categories)
+
+    if not removed:
+      return EffectResult(source, target, f"{target.name} had nothing to remove")
+
+    names = ", ".join(effect.name for effect in removed)
+    return EffectResult(source, target, f"{target.name} is cleansed of {names}")

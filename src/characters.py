@@ -120,6 +120,17 @@ class Character(Prototype):
     ]
     self.active_effects.append(effect)
 
+  def remove_harmful_effects(self, categories) -> list:
+    """Remove every harmful effect in one of `categories`; return those removed."""
+    removed = [
+      effect for effect in self.active_effects
+      if effect.is_harmful() and effect.category in categories
+    ]
+    self.active_effects = [
+      effect for effect in self.active_effects if effect not in removed
+    ]
+    return removed
+
   def remove_effect(self, effect):
      if effect in self.active_effects:
         self.active_effects.remove(effect)
