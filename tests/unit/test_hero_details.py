@@ -52,3 +52,18 @@ class TestDealsDamage(unittest.TestCase):
   def test_one_damaging_effect_is_enough(self):
     # Serpent Sting deals damage and also applies poison
     self.assertTrue(SERPENT_STING.deals_damage())
+
+
+class TestBerserkerRage(unittest.TestCase):
+
+  def test_description_matches_how_long_the_buff_lasts(self):
+    # Regression: the description promised "the next three abilities",
+    # but the buff has always lasted 3 rounds
+    from hero_data import BRAEKS
+
+    rage = next(a for a in BRAEKS.abilities if a.name == "Berserker Rage")
+    buff = rage.effects[0].status
+
+    self.assertEqual(buff.duration, 3)
+    self.assertIn("3 rounds", rage.description)
+    self.assertNotIn("abilities", rage.description)

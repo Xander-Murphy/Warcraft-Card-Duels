@@ -119,7 +119,7 @@ HEROIC_STRIKE = Ability(
 
 BERSERKER_RAGE = Ability(
   "Berserker Rage",
-  "Increase offensive power for the next three abilities",
+  "Increases attack for 3 rounds",
   10,
   4,
   TargetType.SELF,
