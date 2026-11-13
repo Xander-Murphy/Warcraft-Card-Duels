@@ -14,8 +14,9 @@ from combat_controller import (
   TargetSelection,
 )
 from effects_data import ARCANE_BARRIER, ARMOR_BREAK, POISON
+from enemies import Enemy
 from enemy_behavior import RandomBehavior
-from enemy_data import DEFIAS_MINER, DEVIATE_RAVAGER, RAGEFIRE_TROG
+from enemy_data import DEFIAS_MINER, RAGEFIRE_TROG
 from hero_data import BRAEKS, GENJO, KORYNE
 from lib.types import SpellSchool, TargetType
 
@@ -79,7 +80,7 @@ class TestStartOfFight(unittest.TestCase):
 
   def test_an_enemy_with_no_abilities_shows_its_basic_attack(self):
     controller, _, _ = make_controller(
-      enemies=[seeded(DEVIATE_RAVAGER.clone())]
+      enemies=[seeded(Enemy("Brute", "Test", 46, 11, 1, 5))]
     )
 
     self.assertTrue(

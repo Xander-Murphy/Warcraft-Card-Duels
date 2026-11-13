@@ -86,9 +86,10 @@ class TestPlanEnemyActions(unittest.TestCase):
     self.assertGreater(used_basic, 0)
 
   def test_basic_attack_is_available_every_single_round(self):
-    ravager = seeded(DEVIATE_RAVAGER.clone())
+    # An enemy with no abilities of its own, so the basic attack is all it has
+    brute = seeded(Enemy("Brute", "Test", 46, 11, 1, 5))
     hero = Character("Target", "Test", 1000, 0, 0, 5)
-    combat = Combat([hero], [ravager])
+    combat = Combat([hero], [brute])
 
     for _ in range(5):
       self.assertEqual(len(combat.plan_enemy_actions()), 1)
@@ -98,7 +99,7 @@ class TestPlanEnemyActions(unittest.TestCase):
 
 
 class TestFullFights(unittest.TestCase):
-  """Heroes versus Wailing Caverns enemies that have no abilities of their own."""
+  """Heroes versus Wailing Caverns enemies, played out to the end."""
 
   def play(self, seed, make_behavior=None):
     rng = random.Random(seed)
@@ -154,3 +155,30 @@ class TestFullFights(unittest.TestCase):
         self.assertLessEqual(combat.round_number, 40)
         damage_taken = sum(h.max_health - h.health for h in heroes)
         self.assertGreater(damage_taken, 0)
+
+
+class TestEnemyAbilitiesInFights(unittest.TestCase):
+
+  def test_final_encounters_use_their_specials_and_still_end(self):
+    from encounters import generate_encounter
+    from hero_data import LIORA, TORVALD
+
+    for dungeon in ("Ragefire Chasm", "Wailing Caverns", "The Deadmines"):
+      with self.subTest(dungeon=dungeon):
+        random.seed(3)
+        enemies = generate_encounter(dungeon, 3)
+        heroes = [TORVALD.clone(), BRAEKS.clone(), LIORA.clone()]
+        combat = Combat(heroes, enemies)
+        special_names = {a.name for e in enemies for a in e.abilities}
+        used = set()
+
+        while not combat.is_over() and combat.round_number <= 60:
+          for hero in combat.living_heroes():
+            target = combat.living_enemies()[0]
+            combat.queue_action(hero, hero.basic_attack, [target])
+          combat.plan_enemy_actions()
+          for result in combat.resolve_round():
+            used.update(n for n in special_names if f"'s {n} " in result.description)
+
+        self.assertTrue(combat.is_over())
+        self.assertTrue(used, "enemies never used one of their abilities")

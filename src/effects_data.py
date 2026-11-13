@@ -146,3 +146,69 @@ BLEED = StatusEffect(
   3,
   damage_school=SpellSchool.PHYSICAL
 )
+
+
+# --- Enemy abilities (week 12) ------------------------------------------------
+
+BURN = StatusEffect(
+  "Burn",
+  EffectType.DAMAGE_OVER_TIME,
+  EffectCategory.MAGICAL,
+  4,
+  3,
+  damage_school=SpellSchool.FIRE
+)
+
+AGONY = StatusEffect(
+  "Agony",
+  EffectType.DAMAGE_OVER_TIME,
+  EffectCategory.CURSE,
+  5,
+  4,
+  damage_school=SpellSchool.SHADOW
+)
+
+MOONFIRE = StatusEffect(
+  "Moonfire",
+  EffectType.DAMAGE_OVER_TIME,
+  EffectCategory.MAGICAL,
+  4,
+  3,
+  damage_school=SpellSchool.ARCANE
+)
+
+CHILLED = StatusEffect(
+  "Chilled",
+  EffectType.DEBUFF,
+  EffectCategory.MAGICAL,
+  3,
+  2,
+  stat=Stat.SPEED
+)
+
+ENTANGLED = StatusEffect(
+  "Entangled",
+  EffectType.DEBUFF,
+  EffectCategory.MAGICAL,
+  3,
+  2,
+  stat=Stat.SPEED
+)
+
+WEAKENED = StatusEffect(
+  "Weakened",
+  EffectType.DEBUFF,
+  EffectCategory.MAGICAL,
+  6,
+  2,
+  stat=Stat.ATTACK
+)
+
+HAMSTRUNG = StatusEffect(
+  "Hamstrung",
+  EffectType.DEBUFF,
+  EffectCategory.PHYSICAL,
+  3,
+  2,
+  stat=Stat.SPEED
+)
